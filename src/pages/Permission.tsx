@@ -1,13 +1,14 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Mic, Plus, ArrowRight, Home, X, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, ArrowRight, Home, X, Menu, Link2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const Permission = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [meetingLink, setMeetingLink] = useState('');
   
   // Scroll restoration on page load
   useEffect(() => {
@@ -144,32 +145,58 @@ const Permission = () => {
         <div className="flex items-center justify-center min-h-screen p-4">
           <div className="bg-white rounded-xl shadow-subtle max-w-md w-full p-8 animate-fade-in-up">
             <div className="text-center">
-              <div className="mx-auto bg-teal/10 w-16 h-16 flex items-center justify-center rounded-full mb-6">
-                <Mic size={32} className="text-teal" />
-              </div>
               <h1 className="text-2xl md:text-3xl font-medium text-darkblue mb-4">
-                To use MeetingLingo, enable microphone access
+                Add MeetingLingo to your meeting
               </h1>
               <p className="text-gray-600 mb-6">
-                MeetingLingo needs microphone access to provide real-time translation during your meetings. Please allow access when prompted by your browser.
+                Enter your meeting link and MeetingLingo will join the call
               </p>
               
-              <div className="mb-8 bg-gray-50 rounded-lg p-4">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Microphone permission illustration" 
-                  className="mx-auto h-48 object-contain"
-                />
+              <div className="space-y-6 text-left">
+                <div className="space-y-2">
+                  <label htmlFor="meeting-link" className="text-gray-700 font-medium">Meeting link</label>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <Input 
+                      id="meeting-link"
+                      className="pl-10 w-full border border-gray-200 rounded-lg py-3"
+                      placeholder="Paste meeting link"
+                      value={meetingLink}
+                      onChange={(e) => setMeetingLink(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-gray-700 font-medium">Meeting languages</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button className="flex items-center justify-between border border-gray-200 rounded-lg py-3 px-4 text-left">
+                      <div className="flex items-center">
+                        <span className="font-medium ml-2">GB English</span>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                    
+                    <button className="flex items-center justify-between border border-gray-200 rounded-lg py-3 px-4 text-left">
+                      <div className="flex items-center">
+                        <span className="font-medium ml-2">ES Spanish</span>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
               
-              <Button className="bg-teal text-white w-full py-6 text-lg">
-                Enable Microphone
-                <ArrowRight size={20} className="ml-2" />
+              <Button 
+                className="bg-teal text-white w-full py-6 text-lg mt-8"
+                disabled={!meetingLink}
+              >
+                Join call
               </Button>
-              
-              <p className="text-sm text-gray-500 mt-4">
-                You can change this permission anytime in your browser settings.
-              </p>
             </div>
           </div>
         </div>
