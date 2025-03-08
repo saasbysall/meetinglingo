@@ -1,27 +1,31 @@
+
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Plus, ArrowRight, Home, X, Menu, Link2, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useUserData } from '@/hooks/useUserData';
+import { supabase } from '@/integrations/supabase/client';
+
 const Permission = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [meetingLink, setMeetingLink] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState('en-GB');
   const [targetLanguage, setTargetLanguage] = useState('es-ES');
+  const [isJoining, setIsJoining] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { userData } = useUserData();
+  const navigate = useNavigate();
 
   // Scroll restoration on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  // Mock user data (would come from auth context in a real app)
-  const user = {
-    username: 'johndoe',
-    email: 'john@example.com',
-    minutes: 0
-  };
 
   // List of available languages
   const languages = [{
@@ -55,6 +59,82 @@ const Permission = () => {
     value: 'ru-RU',
     label: 'RU Russian'
   }];
+
+  const handleJoinMeeting = async () => {
+    if (!meetingLink) {
+      toast({
+        title: "Error",
+        description: "Please enter a meeting link",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Not logged in",
+        description: "Please log in to join a meeting",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    setIsJoining(true);
+
+    try {
+      // Determine the platform from the meeting link (simplified)
+      let platform = 'unknown';
+      if (meetingLink.includes('zoom.us')) {
+        platform = 'zoom';
+      } else if (meetingLink.includes('teams.microsoft.com')) {
+        platform = 'teams';
+      } else if (meetingLink.includes('meet.google.com')) {
+        platform = 'meet';
+      }
+
+      // Save meeting to database
+      const { data, error } = await supabase
+        .from('meetings')
+        .insert({
+          user_id: user.id,
+          platform,
+          meeting_link: meetingLink,
+          source_language: sourceLanguage,
+          target_language: targetLanguage
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success!",
+        description: "Joining your meeting now...",
+      });
+
+      // In a real app, you would now launch the meeting connection
+      // For now, we'll just redirect to a mock "meeting" page after a delay
+      setTimeout(() => {
+        // In a real implementation, this would connect to the meeting
+        console.log("Joining meeting:", data);
+        setIsJoining(false);
+        // For demo purposes, you might redirect to another page
+        // navigate(`/meeting/${data.id}`);
+      }, 2000);
+    } catch (error) {
+      console.error("Error joining meeting:", error);
+      toast({
+        title: "Failed to join meeting",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+      setIsJoining(false);
+    }
+  };
+
   return <div className="min-h-screen flex flex-col md:flex-row bg-lightgray">
       {/* Mobile Header - Only visible on small screens */}
       <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-subtle">
@@ -81,26 +161,36 @@ const Permission = () => {
             </Link>
             
             <div className="pt-4 flex flex-col space-y-4">
-              <Link to="/signup">
-                <Button className="w-full bg-gradient-to-r from-teal to-teal/90 text-white">
-                  Start Trial
+              {!user ? (
+                <Link to="/signup">
+                  <Button className="w-full bg-gradient-to-r from-teal to-teal/90 text-white">
+                    Start Trial
+                  </Button>
+                </Link>
+              ) : (
+                <Button className="w-full border border-gray-300 text-gray-700" 
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '/';
+                  }}>
+                  Sign Out
                 </Button>
-              </Link>
+              )}
             </div>
             
             <div className="flex items-center mt-4 pt-4 border-t border-gray-100">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="https://github.com/shadcn.png" alt={user.username} />
-                <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src="https://github.com/shadcn.png" alt={userData?.username || 'User'} />
+                <AvatarFallback>{userData?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium text-darkblue">{user.username}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-sm font-medium text-darkblue">{userData?.username || 'User'}</p>
+                <p className="text-xs text-gray-500">{userData?.email || 'user@example.com'}</p>
               </div>
             </div>
             
             <div className="bg-gray-100 rounded-full px-4 py-2 inline-flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-700">{user.minutes} min</span>
+              <span className="text-sm font-medium text-gray-700">{userData?.minutes || 0} min</span>
             </div>
           </div>
         </div>}
@@ -129,23 +219,33 @@ const Permission = () => {
           
           {/* Trial Call-to-Action */}
           <div className="px-4 py-4">
-            <Link to="/signup">
-              <Button className="w-full bg-gradient-to-r from-teal to-teal/90 text-white">
-                Start Trial
+            {!user ? (
+              <Link to="/signup">
+                <Button className="w-full bg-gradient-to-r from-teal to-teal/90 text-white">
+                  Start Trial
+                </Button>
+              </Link>
+            ) : (
+              <Button className="w-full border border-gray-300 text-gray-700" 
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/';
+                }}>
+                Sign Out
               </Button>
-            </Link>
+            )}
           </div>
           
           {/* User Info */}
           <div className="px-4 py-4 border-t border-gray-200">
             <div className="flex items-center">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="https://github.com/shadcn.png" alt={user.username} />
-                <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src="https://github.com/shadcn.png" alt={userData?.username || 'User'} />
+                <AvatarFallback>{userData?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium text-darkblue">{user.username}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-sm font-medium text-darkblue">{userData?.username || 'User'}</p>
+                <p className="text-xs text-gray-500">{userData?.email || 'user@example.com'}</p>
               </div>
             </div>
           </div>
@@ -153,7 +253,7 @@ const Permission = () => {
           {/* Minutes Balance */}
           <div className="px-4 py-4 mb-6">
             <div className="bg-gray-100 rounded-full px-4 py-2 inline-flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-700">{user.minutes} min</span>
+              <span className="text-sm font-medium text-gray-700">{userData?.minutes || 0} min</span>
             </div>
           </div>
         </div>
@@ -167,19 +267,19 @@ const Permission = () => {
               <h1 className="text-2xl font-semibold text-darkblue mb-3 md:text-2xl">
                 Add MeetingLingo to your meeting
               </h1>
-              <p className="text-gray-600 mb-8 text-base font-thin"></p>
+              <p className="text-gray-600 mb-8 text-base font-thin">Enter your meeting link and choose your languages</p>
               
               <div className="space-y-8 text-left">
                 <div className="space-y-3">
-                  <label htmlFor="meeting-link" className="text-gray-900 font-semibold text-lg block bg-cyan-50">Meeting link</label>
+                  <label htmlFor="meeting-link" className="text-gray-900 font-bold text-lg block">Meeting Link</label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <Input id="meeting-link" placeholder="Paste meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="pl-10 w-full border-2 border-gray-200 py-3 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20 rounded-lg" />
+                    <Input id="meeting-link" placeholder="Paste meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="pl-10 w-full border-2 border-gray-200 py-6 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20 rounded-lg" />
                   </div>
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="text-gray-900 font-semibold text-lg block flex items-center">
+                  <label className="text-gray-900 font-bold text-lg block flex items-center">
                     <Globe size={18} className="mr-2 text-teal" />
                     Meeting languages
                   </label>
@@ -187,7 +287,7 @@ const Permission = () => {
                     <div className="space-y-2 rounded-2xl">
                       <label className="text-sm text-gray-500 font-medium">Source language</label>
                       <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
-                        <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
+                        <SelectTrigger className="w-full border-2 border-gray-200 py-5 rounded-lg focus:ring-1 focus:ring-teal/20">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
@@ -201,7 +301,7 @@ const Permission = () => {
                     <div className="space-y-2 rounded-2xl">
                       <label className="text-sm text-gray-500 font-medium">Target language</label>
                       <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-                        <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
+                        <SelectTrigger className="w-full border-2 border-gray-200 py-5 rounded-lg focus:ring-1 focus:ring-teal/20">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
@@ -215,8 +315,12 @@ const Permission = () => {
                 </div>
               </div>
               
-              <Button className="bg-teal hover:bg-teal/90 active:bg-teal/80 text-white w-full py-6 mt-8 text-lg font-semibold rounded-lg shadow-glow-teal transition-all" disabled={!meetingLink}>
-                Join call
+              <Button 
+                className="bg-teal hover:bg-teal/90 active:bg-teal/80 text-white w-full py-7 mt-8 text-lg font-semibold rounded-lg shadow-glow-teal transition-all" 
+                disabled={!meetingLink || isJoining}
+                onClick={handleJoinMeeting}
+              >
+                {isJoining ? 'Joining...' : 'Join call'}
                 <ArrowRight className="ml-2" size={18} />
               </Button>
             </div>
