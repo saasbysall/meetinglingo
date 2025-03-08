@@ -1,24 +1,16 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Plus, ArrowRight, Home, X, Menu, Link2, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 const Permission = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [meetingLink, setMeetingLink] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState('en-GB');
   const [targetLanguage, setTargetLanguage] = useState('es-ES');
-  
+
   // Scroll restoration on page load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,21 +24,38 @@ const Permission = () => {
   };
 
   // List of available languages
-  const languages = [
-    { value: 'en-GB', label: 'GB English' },
-    { value: 'en-US', label: 'US English' },
-    { value: 'es-ES', label: 'ES Spanish' },
-    { value: 'fr-FR', label: 'FR French' },
-    { value: 'de-DE', label: 'DE German' },
-    { value: 'it-IT', label: 'IT Italian' },
-    { value: 'ja-JP', label: 'JP Japanese' },
-    { value: 'zh-CN', label: 'CN Chinese' },
-    { value: 'pt-BR', label: 'BR Portuguese' },
-    { value: 'ru-RU', label: 'RU Russian' },
-  ];
-
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-lightgray">
+  const languages = [{
+    value: 'en-GB',
+    label: 'GB English'
+  }, {
+    value: 'en-US',
+    label: 'US English'
+  }, {
+    value: 'es-ES',
+    label: 'ES Spanish'
+  }, {
+    value: 'fr-FR',
+    label: 'FR French'
+  }, {
+    value: 'de-DE',
+    label: 'DE German'
+  }, {
+    value: 'it-IT',
+    label: 'IT Italian'
+  }, {
+    value: 'ja-JP',
+    label: 'JP Japanese'
+  }, {
+    value: 'zh-CN',
+    label: 'CN Chinese'
+  }, {
+    value: 'pt-BR',
+    label: 'BR Portuguese'
+  }, {
+    value: 'ru-RU',
+    label: 'RU Russian'
+  }];
+  return <div className="min-h-screen flex flex-col md:flex-row bg-lightgray">
       {/* Mobile Header - Only visible on small screens */}
       <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-subtle">
         <Link to="/" className="flex items-center">
@@ -54,31 +63,19 @@ const Permission = () => {
             Meeting<span className="text-teal">Lingo</span>
           </span>
         </Link>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-darkblue rounded-md hover:bg-gray-100"
-        >
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-darkblue rounded-md hover:bg-gray-100">
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </header>
 
       {/* Mobile Menu - Only visible when toggled on small screens */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[60px] bg-white z-40 animate-fade-in">
+      {isMobileMenuOpen && <div className="md:hidden fixed inset-0 top-[60px] bg-white z-40 animate-fade-in">
           <div className="container mx-auto px-4 py-8 flex flex-col space-y-6">
-            <Link 
-              to="/app" 
-              className="flex items-center space-x-3 text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <Link to="/app" className="flex items-center space-x-3 text-darkblue font-medium text-lg py-3 border-b border-gray-100" onClick={() => setIsMobileMenuOpen(false)}>
               <Plus size={20} />
               <span>New Meeting</span>
             </Link>
-            <Link 
-              to="/history" 
-              className="flex items-center space-x-3 text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <Link to="/history" className="flex items-center space-x-3 text-darkblue font-medium text-lg py-3 border-b border-gray-100" onClick={() => setIsMobileMenuOpen(false)}>
               <Home size={20} />
               <span>All Meetings</span>
             </Link>
@@ -106,8 +103,7 @@ const Permission = () => {
               <span className="text-sm font-medium text-gray-700">{user.minutes} min</span>
             </div>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Sidebar - Only visible on medium screens and up */}
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 bg-white">
@@ -168,7 +164,7 @@ const Permission = () => {
         <div className="flex items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-xl shadow-elevated max-w-md w-full p-8 animate-fade-in-up">
             <div className="text-center mb-3">
-              <h1 className="text-2xl md:text-3xl font-semibold text-darkblue mb-3">
+              <h1 className="text-2xl font-semibold text-darkblue mb-3 md:text-2xl">
                 Add MeetingLingo to your meeting
               </h1>
               <p className="text-gray-600 mb-8 text-base">
@@ -177,16 +173,10 @@ const Permission = () => {
               
               <div className="space-y-8 text-left">
                 <div className="space-y-3">
-                  <label htmlFor="meeting-link" className="text-gray-900 font-semibold text-lg block">Meeting link</label>
+                  <label htmlFor="meeting-link" className="text-gray-900 font-semibold text-lg block bg-cyan-50">Meeting link</label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <Input 
-                      id="meeting-link"
-                      className="pl-10 w-full border-2 border-gray-200 rounded-lg py-3 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20"
-                      placeholder="Paste meeting link"
-                      value={meetingLink}
-                      onChange={(e) => setMeetingLink(e.target.value)}
-                    />
+                    <Input id="meeting-link" className="pl-10 w-full border-2 border-gray-200 rounded-lg py-3 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20" placeholder="Paste meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} />
                   </div>
                 </div>
                 
@@ -198,38 +188,28 @@ const Permission = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm text-gray-500 font-medium">Source language</label>
-                      <Select
-                        value={sourceLanguage}
-                        onValueChange={setSourceLanguage}
-                      >
+                      <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
                         <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
-                          {languages.map((language) => (
-                            <SelectItem key={language.value} value={language.value}>
+                          {languages.map(language => <SelectItem key={language.value} value={language.value}>
                               {language.label}
-                            </SelectItem>
-                          ))}
+                            </SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="space-y-2">
                       <label className="text-sm text-gray-500 font-medium">Target language</label>
-                      <Select
-                        value={targetLanguage}
-                        onValueChange={setTargetLanguage}
-                      >
+                      <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                         <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
                           <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
-                          {languages.map((language) => (
-                            <SelectItem key={language.value} value={language.value}>
+                          {languages.map(language => <SelectItem key={language.value} value={language.value}>
                               {language.label}
-                            </SelectItem>
-                          ))}
+                            </SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -237,10 +217,7 @@ const Permission = () => {
                 </div>
               </div>
               
-              <Button 
-                className="bg-teal hover:bg-teal/90 active:bg-teal/80 text-white w-full py-6 mt-8 text-lg font-semibold rounded-lg shadow-glow-teal transition-all"
-                disabled={!meetingLink}
-              >
+              <Button className="bg-teal hover:bg-teal/90 active:bg-teal/80 text-white w-full py-6 mt-8 text-lg font-semibold rounded-lg shadow-glow-teal transition-all" disabled={!meetingLink}>
                 Join call
                 <ArrowRight className="ml-2" size={18} />
               </Button>
@@ -248,8 +225,6 @@ const Permission = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Permission;
