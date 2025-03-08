@@ -167,7 +167,7 @@ const Permission = () => {
               <h1 className="text-2xl font-semibold text-darkblue mb-3 md:text-2xl">
                 Add MeetingLingo to your meeting
               </h1>
-              <p className="text-gray-600 mb-8 text-base">
+              <p className="text-gray-600 mb-8 text-base font-thin">
                 Enter your meeting link and MeetingLingo will join the call
               </p>
               
@@ -176,7 +176,7 @@ const Permission = () => {
                   <label htmlFor="meeting-link" className="text-gray-900 font-semibold text-lg block bg-cyan-50">Meeting link</label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <Input id="meeting-link" className="pl-10 w-full border-2 border-gray-200 rounded-lg py-3 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20" placeholder="Paste meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} />
+                    <Input id="meeting-link" placeholder="Paste meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} className="pl-10 w-full border-2 border-gray-200 py-3 text-base font-medium focus:border-teal focus:ring-1 focus:ring-teal/20 rounded-lg" />
                   </div>
                 </div>
                 
