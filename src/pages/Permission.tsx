@@ -167,9 +167,7 @@ const Permission = () => {
               <h1 className="text-2xl font-semibold text-darkblue mb-3 md:text-2xl">
                 Add MeetingLingo to your meeting
               </h1>
-              <p className="text-gray-600 mb-8 text-base font-thin">
-                Enter your meeting link and MeetingLingo will join the call
-              </p>
+              <p className="text-gray-600 mb-8 text-base font-thin"></p>
               
               <div className="space-y-8 text-left">
                 <div className="space-y-3">
