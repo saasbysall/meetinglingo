@@ -186,7 +186,7 @@ const Permission = () => {
                     Meeting languages
                   </label>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 rounded-2xl">
                       <label className="text-sm text-gray-500 font-medium">Source language</label>
                       <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
                         <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
@@ -200,7 +200,7 @@ const Permission = () => {
                       </Select>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 rounded-2xl">
                       <label className="text-sm text-gray-500 font-medium">Target language</label>
                       <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                         <SelectTrigger className="w-full border-2 border-gray-200 py-3 rounded-lg focus:ring-1 focus:ring-teal/20">
