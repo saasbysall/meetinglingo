@@ -12,10 +12,10 @@ const CTASection = () => {
 
   const handleTrialClick = () => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/meeting/new');
       toast({
         title: "Welcome back!",
-        description: "You're already logged in. You can create a new meeting from your dashboard.",
+        description: "Create a new meeting with translation.",
       });
     } else {
       navigate('/signup');

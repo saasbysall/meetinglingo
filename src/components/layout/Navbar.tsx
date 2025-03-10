@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, Video } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -80,8 +80,14 @@ const Navbar = () => {
           
           {user ? (
             <div className="flex items-center space-x-4">
+              <Link to="/meeting/new">
+                <Button className="bg-teal text-white hover:bg-teal/90 flex items-center space-x-2">
+                  <Video size={16} />
+                  <span>New Meeting</span>
+                </Button>
+              </Link>
               <Link to="/dashboard">
-                <Button className="bg-darkblue text-white hover:bg-darkblue/90">
+                <Button variant="outline" className="border-gray-200 hover:bg-gray-50">
                   Dashboard
                 </Button>
               </Link>
@@ -154,10 +160,19 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link 
+                    to="/meeting/new" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button className="w-full bg-teal text-white hover:bg-teal/90 flex items-center justify-center space-x-2">
+                      <Video size={16} />
+                      <span>New Meeting</span>
+                    </Button>
+                  </Link>
+                  <Link 
                     to="/dashboard" 
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <Button className="w-full bg-darkblue text-white hover:bg-darkblue/90">
+                    <Button variant="outline" className="w-full border-gray-200 hover:bg-gray-50">
                       Dashboard
                     </Button>
                   </Link>
