@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface TranslationOptions {
   sourceLanguage: string;
@@ -17,10 +18,14 @@ class TranslationService {
   private processingChunk = false;
   private options: TranslationOptions;
   private audioElement: HTMLAudioElement | null = null;
+  private onTranscriptUpdate: ((original: string, translated: string) => void) | null = null;
 
-  constructor(options: TranslationOptions) {
+  constructor(options: TranslationOptions, onTranscriptUpdate?: (original: string, translated: string) => void) {
     this.options = options;
     this.audioElement = new Audio();
+    if (onTranscriptUpdate) {
+      this.onTranscriptUpdate = onTranscriptUpdate;
+    }
   }
 
   async initialize() {
@@ -41,6 +46,7 @@ class TranslationService {
         }
       };
       
+      console.log('Translation service initialized successfully');
       return true;
     } catch (error) {
       console.error('Failed to initialize audio capture:', error);
@@ -59,6 +65,7 @@ class TranslationService {
     
     // Start recording
     this.mediaRecorder.start();
+    console.log('Started recording for translation');
     
     // Process audio in 5-second chunks
     this.recordingInterval = window.setInterval(async () => {
@@ -79,6 +86,8 @@ class TranslationService {
 
   async stopTranslation() {
     this.isRecording = false;
+    console.log('Stopping translation');
+    
     if (this.recordingInterval) {
       clearInterval(this.recordingInterval);
       this.recordingInterval = null;
@@ -100,6 +109,8 @@ class TranslationService {
     try {
       const audioBlob = new Blob(this.chunks, { type: 'audio/webm' });
       const base64Audio = await this.blobToBase64(audioBlob);
+      
+      console.log('Processing audio chunk of size:', base64Audio.length);
       
       // Update user minutes
       if (this.options.meetingId) {
@@ -125,8 +136,17 @@ class TranslationService {
         }
       });
       
-      if (sttError) throw new Error(`Speech-to-text error: ${sttError.message}`);
-      if (!sttData?.text) return; // No speech detected
+      if (sttError) {
+        console.error('Speech-to-text error:', sttError);
+        throw new Error(`Speech-to-text error: ${sttError.message}`);
+      }
+      
+      if (!sttData?.text) {
+        console.log('No speech detected in this chunk');
+        return; // No speech detected
+      }
+      
+      console.log('Speech-to-text result:', sttData.text);
       
       // 2. Translate text
       const { data: translationData, error: translationError } = await supabase.functions.invoke('translate-text', {
@@ -137,7 +157,17 @@ class TranslationService {
         }
       });
       
-      if (translationError) throw new Error(`Translation error: ${translationError.message}`);
+      if (translationError) {
+        console.error('Translation error:', translationError);
+        throw new Error(`Translation error: ${translationError.message}`);
+      }
+      
+      console.log('Translation result:', translationData.text);
+      
+      // Update transcript callback if provided
+      if (this.onTranscriptUpdate) {
+        this.onTranscriptUpdate(sttData.text, translationData.text);
+      }
       
       // 3. Convert text to speech
       const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
@@ -147,10 +177,14 @@ class TranslationService {
         }
       });
       
-      if (ttsError) throw new Error(`Text-to-speech error: ${ttsError.message}`);
+      if (ttsError) {
+        console.error('Text-to-speech error:', ttsError);
+        throw new Error(`Text-to-speech error: ${ttsError.message}`);
+      }
       
       // 4. Play the translated audio
       if (ttsData?.audioContent) {
+        console.log('Playing translated audio');
         this.playAudio(ttsData.audioContent);
       }
       
@@ -168,7 +202,11 @@ class TranslationService {
           }
         ]);
         
-        if (transcriptError) console.error('Failed to save transcript:', transcriptError);
+        if (transcriptError) {
+          console.error('Failed to save transcript:', transcriptError);
+        } else {
+          console.log('Transcript saved successfully');
+        }
       }
     } catch (error) {
       console.error('Error processing audio chunk:', error);
@@ -215,6 +253,12 @@ class TranslationService {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+  }
+
+  setVolume(volumeLevel: number) {
+    if (this.audioElement) {
+      this.audioElement.volume = volumeLevel / 100;
+    }
   }
 }
 

@@ -49,6 +49,8 @@ serve(async (req) => {
       throw new Error('No audio data provided');
     }
 
+    console.log(`Processing audio chunk with source language: ${sourceLanguage || 'auto'}`);
+
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio);
     
@@ -62,7 +64,7 @@ serve(async (req) => {
       formData.append('language', sourceLanguage.split('-')[0]);
     }
 
-    // Send to OpenAI Whisper API (as it's easier to use than setting up Google Cloud STT)
+    // Send to OpenAI Whisper API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -78,7 +80,7 @@ serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log('Transcription result:', result);
+    console.log('Transcription result:', result.text.substring(0, 50) + '...');
 
     return new Response(
       JSON.stringify({ text: result.text }),

@@ -22,6 +22,9 @@ serve(async (req) => {
       throw new Error('Target language is required');
     }
 
+    console.log(`Translating from ${sourceLanguage || 'auto'} to ${targetLanguage}`);
+    console.log(`Text to translate (first 50 chars): ${text.substring(0, 50)}...`);
+
     const sourceLang = sourceLanguage ? sourceLanguage.split('-')[0] : 'auto';
     const targetLang = targetLanguage.split('-')[0];
 
@@ -60,6 +63,8 @@ serve(async (req) => {
     if (!translatedText) {
       throw new Error('Failed to get translation from API');
     }
+
+    console.log(`Translation result (first 50 chars): ${translatedText.substring(0, 50)}...`);
 
     return new Response(
       JSON.stringify({ text: translatedText }),

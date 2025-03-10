@@ -19,6 +19,9 @@ serve(async (req) => {
       throw new Error('Text is required');
     }
 
+    console.log(`Converting to speech in language: ${targetLanguage}`);
+    console.log(`Text to convert (first 50 chars): ${text.substring(0, 50)}...`);
+
     // Determine the voice based on target language if not provided
     let voiceId = voice || 'alloy';
     
@@ -33,6 +36,8 @@ serve(async (req) => {
       else if (langCode === 'ja') voiceId = 'shimmer';
       else voiceId = 'alloy';
     }
+
+    console.log(`Using voice: ${voiceId}`);
 
     // Generate speech from text using OpenAI API
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -58,6 +63,8 @@ serve(async (req) => {
     // Convert audio buffer to base64
     const arrayBuffer = await response.arrayBuffer();
     const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+    console.log(`Successfully generated audio (length: ${base64Audio.length})`);
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),

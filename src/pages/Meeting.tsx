@@ -12,6 +12,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Mic, MicOff, ExternalLink, Volume2, Volume1, VolumeX } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card } from '@/components/ui/card';
 
 export default function Meeting() {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -26,6 +28,9 @@ export default function Meeting() {
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [volume, setVolume] = useState(70);
   const [translationService, setTranslationService] = useState<TranslationService | null>(null);
+  const [originalText, setOriginalText] = useState<string>("");
+  const [translatedText, setTranslatedText] = useState<string>("");
+  const [transcripts, setTranscripts] = useState<{original: string, translated: string}[]>([]);
   
   // Fetch meeting data
   useEffect(() => {
@@ -57,6 +62,25 @@ export default function Meeting() {
         }
         
         setMeeting(data);
+        
+        // Fetch previous transcripts for this meeting
+        const { data: transcriptData, error: transcriptError } = await supabase
+          .from('transcripts')
+          .select('*')
+          .eq('meeting_id', meetingId)
+          .order('created_at', { ascending: true });
+        
+        if (!transcriptError && transcriptData) {
+          const formattedTranscripts = transcriptData.map(t => {
+            try {
+              return JSON.parse(t.file_url || "{}");
+            } catch (e) {
+              return { original: "", translated: "" };
+            }
+          });
+          setTranscripts(formattedTranscripts);
+        }
+        
       } catch (error: any) {
         console.error('Error fetching meeting:', error);
         toast({
@@ -111,6 +135,12 @@ export default function Meeting() {
     window.open(meeting.meeting_link, '_blank');
   };
   
+  const handleTranscriptUpdate = (original: string, translated: string) => {
+    setOriginalText(original);
+    setTranslatedText(translated);
+    setTranscripts(prev => [...prev, { original, translated }]);
+  };
+  
   const handleStartTranslation = async () => {
     if (!meeting) return;
     
@@ -126,11 +156,14 @@ export default function Meeting() {
     
     try {
       // Initialize translation service
-      const service = new TranslationService({
-        sourceLanguage: meeting.source_language,
-        targetLanguage: meeting.target_language,
-        meetingId: meetingId,
-      });
+      const service = new TranslationService(
+        {
+          sourceLanguage: meeting.source_language,
+          targetLanguage: meeting.target_language,
+          meetingId: meetingId,
+        },
+        handleTranscriptUpdate
+      );
       
       const initialized = await service.initialize();
       if (!initialized) {
@@ -187,11 +220,10 @@ export default function Meeting() {
     const newVolume = parseInt(e.target.value);
     setVolume(newVolume);
     
-    // Apply volume to audio elements
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach(audio => {
-      audio.volume = newVolume / 100;
-    });
+    // Apply volume to translation service
+    if (translationService) {
+      translationService.setVolume(newVolume);
+    }
   };
   
   const getVolumeIcon = () => {
@@ -211,8 +243,8 @@ export default function Meeting() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-grow container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-8">
               <div className="flex items-center justify-between">
@@ -280,7 +312,7 @@ export default function Meeting() {
               
               <Separator className="my-6" />
               
-              <div className="flex justify-center">
+              <div className="flex justify-center mb-6">
                 {!translating ? (
                   <Button 
                     className="bg-teal hover:bg-teal/90 text-white"
@@ -302,6 +334,49 @@ export default function Meeting() {
                   </Button>
                 )}
               </div>
+              
+              {/* Live transcript display */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Live Transcript</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="p-4 relative bg-gray-50">
+                    <h3 className="font-medium mb-2 text-sm text-gray-500">Source: {meeting.source_language}</h3>
+                    <ScrollArea className="h-32">
+                      <p>{originalText}</p>
+                    </ScrollArea>
+                  </Card>
+                  
+                  <Card className="p-4 relative bg-gray-50">
+                    <h3 className="font-medium mb-2 text-sm text-gray-500">Target: {meeting.target_language}</h3>
+                    <ScrollArea className="h-32">
+                      <p>{translatedText}</p>
+                    </ScrollArea>
+                  </Card>
+                </div>
+              </div>
+              
+              {/* Conversation history */}
+              {transcripts.length > 0 && (
+                <div className="mt-8 space-y-4">
+                  <h2 className="text-xl font-semibold">Conversation History</h2>
+                  <ScrollArea className="h-64 border rounded-md p-4">
+                    {transcripts.map((transcript, index) => (
+                      <div key={index} className="mb-4 pb-4 border-b last:border-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h3 className="text-sm text-gray-500 mb-1">Original ({meeting.source_language})</h3>
+                            <p>{transcript.original}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm text-gray-500 mb-1">Translated ({meeting.target_language})</h3>
+                            <p>{transcript.translated}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+              )}
             </div>
           </div>
         </div>
