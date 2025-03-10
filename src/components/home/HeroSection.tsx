@@ -1,12 +1,29 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, ChevronRight, Globe, Clock, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const HeroSection = () => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleTrialClick = () => {
+    if (user) {
+      navigate('/dashboard');
+      toast({
+        title: "Welcome back!",
+        description: "You're already logged in. You can create a new meeting from your dashboard.",
+      });
+    } else {
+      navigate('/signup');
+    }
+  };
 
   return (
     <div className="relative pt-24 md:pt-32 pb-16 overflow-hidden">
@@ -32,12 +49,13 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <Link to="/signup">
-              <Button className="button-primary flex items-center w-full sm:w-auto">
-                Start Free 7-Day Trial
-                <ChevronRight size={18} className="ml-1" />
-              </Button>
-            </Link>
+            <Button 
+              className="button-primary flex items-center w-full sm:w-auto"
+              onClick={handleTrialClick}
+            >
+              Start Free 7-Day Trial
+              <ChevronRight size={18} className="ml-1" />
+            </Button>
             
             <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
               <DialogTrigger asChild>

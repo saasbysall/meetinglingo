@@ -1,17 +1,24 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
 
-  // Check if user is on the dashboard or other authenticated pages
-  const isAuthenticated = location.pathname.includes('/dashboard') || 
-                          location.pathname.includes('/settings');
+  // Check if user is on authenticated pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+  const isDashboardPage = location.pathname.includes('/dashboard') || 
+                          location.pathname.includes('/meeting') ||
+                          location.pathname.includes('/history');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +30,23 @@ const Navbar = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account."
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -40,24 +64,36 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
-          <div className="flex items-center space-x-6">
-            <Link to="/features" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-              Features
-            </Link>
-            <Link to="/pricing" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-              Pricing
-            </Link>
-            <Link to="/about" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-              About
-            </Link>
-          </div>
+          {!isDashboardPage && (
+            <div className="flex items-center space-x-6">
+              <Link to="/features" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
+                Features
+              </Link>
+              <Link to="/pricing" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
+                Pricing
+              </Link>
+              <Link to="/about" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
+                About
+              </Link>
+            </div>
+          )}
           
-          {isAuthenticated ? (
-            <Link to="/dashboard">
-              <Button className="bg-darkblue text-white hover:bg-darkblue/90">
-                Dashboard
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <Link to="/dashboard">
+                <Button className="bg-darkblue text-white hover:bg-darkblue/90">
+                  Dashboard
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="border-gray-200 hover:bg-gray-50 flex items-center space-x-2"
+                onClick={handleSignOut}
+              >
+                <LogOut size={16} />
+                <span>Sign Out</span>
               </Button>
-            </Link>
+            </div>
           ) : (
             <div className="flex items-center space-x-4">
               <Link to="/login">
@@ -88,38 +124,55 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 top-[60px] bg-white z-40 animate-fade-in">
           <div className="container mx-auto px-4 py-8 flex flex-col space-y-6">
-            <Link 
-              to="/features" 
-              className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link 
-              to="/pricing" 
-              className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link 
-              to="/about" 
-              className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              About
-            </Link>
-            
-            <div className="pt-4 flex flex-col space-y-4">
-              {isAuthenticated ? (
+            {!isDashboardPage && (
+              <>
                 <Link 
-                  to="/dashboard" 
+                  to="/features" 
+                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <Button className="w-full bg-darkblue text-white hover:bg-darkblue/90">
-                    Dashboard
-                  </Button>
+                  Features
                 </Link>
+                <Link 
+                  to="/pricing" 
+                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Pricing
+                </Link>
+                <Link 
+                  to="/about" 
+                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  About
+                </Link>
+              </>
+            )}
+            
+            <div className="pt-4 flex flex-col space-y-4">
+              {user ? (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button className="w-full bg-darkblue text-white hover:bg-darkblue/90">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-gray-200 hover:bg-gray-50 flex items-center justify-center space-x-2"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link 

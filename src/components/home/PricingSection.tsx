@@ -1,13 +1,18 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const PricingSection = () => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const plans = [
     {
@@ -61,6 +66,22 @@ const PricingSection = () => {
       highlighted: false
     }
   ];
+
+  const handlePlanClick = (planName) => {
+    if (planName === 'Enterprise') {
+      navigate('/contact');
+    } else {
+      if (user) {
+        navigate('/dashboard');
+        toast({
+          title: "Welcome back!",
+          description: "You're already logged in. You can create a new meeting from your dashboard.",
+        });
+      } else {
+        navigate('/signup');
+      }
+    }
+  };
   
   return (
     <section id="pricing" className="py-20">
@@ -130,17 +151,16 @@ const PricingSection = () => {
                 ))}
               </ul>
               
-              <Link to={plan.name === 'Enterprise' ? '/contact' : '/signup'}>
-                <Button 
-                  className={
-                    plan.highlighted 
-                      ? 'w-full bg-teal hover:bg-teal/90 text-white' 
-                      : 'w-full bg-white border border-gray-200 text-darkblue hover:bg-gray-50'
-                  }
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
+              <Button 
+                onClick={() => handlePlanClick(plan.name)}
+                className={
+                  plan.highlighted 
+                    ? 'w-full bg-teal hover:bg-teal/90 text-white' 
+                    : 'w-full bg-white border border-gray-200 text-darkblue hover:bg-gray-50'
+                }
+              >
+                {plan.cta}
+              </Button>
             </div>
           ))}
         </div>
@@ -179,7 +199,7 @@ const PricingSection = () => {
             
             <div className="mt-6 text-center">
               <p className="text-darkblue/70 text-sm">
-                Have more questions? <a href="/contact" className="text-teal font-medium">Contact our sales team</a>
+                Have more questions? <Link to="/contact" className="text-teal font-medium">Contact our sales team</Link>
               </p>
             </div>
           </div>

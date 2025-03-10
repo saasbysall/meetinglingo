@@ -1,9 +1,31 @@
 
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CTASection = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleTrialClick = () => {
+    if (user) {
+      navigate('/dashboard');
+      toast({
+        title: "Welcome back!",
+        description: "You're already logged in. You can create a new meeting from your dashboard.",
+      });
+    } else {
+      navigate('/signup');
+    }
+  };
+
+  const handleContactClick = () => {
+    navigate('/contact');
+  };
+
   return (
     <section className="py-20 bg-darkblue relative overflow-hidden">
       {/* Background decorative elements */}
@@ -27,18 +49,21 @@ const CTASection = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/signup">
-              <Button className="w-full sm:w-auto bg-teal hover:bg-teal/90 text-white px-8 py-6 text-lg">
-                Start Your Free Trial
-                <ArrowRight size={20} className="ml-2" />
-              </Button>
-            </Link>
+            <Button 
+              className="w-full sm:w-auto bg-teal hover:bg-teal/90 text-white px-8 py-6 text-lg"
+              onClick={handleTrialClick}
+            >
+              Start Your Free Trial
+              <ArrowRight size={20} className="ml-2" />
+            </Button>
             
-            <Link to="/contact">
-              <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg">
-                Contact Sales
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg"
+              onClick={handleContactClick}
+            >
+              Contact Sales
+            </Button>
           </div>
           
           <p className="text-white/60 mt-6 text-sm">
