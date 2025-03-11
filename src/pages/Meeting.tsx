@@ -57,7 +57,7 @@ export default function Meeting() {
             description: 'The requested meeting could not be found.',
             variant: 'destructive',
           });
-          navigate('/dashboard');
+          navigate('/meeting/new');
           return;
         }
         
@@ -133,6 +133,11 @@ export default function Meeting() {
   const handleOpenMeeting = () => {
     if (!meeting) return;
     window.open(meeting.meeting_link, '_blank');
+    
+    toast({
+      title: 'Meeting opened',
+      description: 'After joining the meeting, come back to this tab and click "Start Translation"',
+    });
   };
   
   const handleTranscriptUpdate = (original: string, translated: string) => {
@@ -143,6 +148,12 @@ export default function Meeting() {
   
   const handleStartTranslation = async () => {
     if (!meeting) return;
+    
+    // First check if the meeting is already open in another tab
+    toast({
+      title: 'Important',
+      description: 'Make sure your meeting is active in another tab before starting translation',
+    });
     
     // Check if user has minutes available
     if (userData?.minutes <= 0) {
@@ -311,6 +322,18 @@ export default function Meeting() {
               </div>
               
               <Separator className="my-6" />
+              
+              <div className="space-y-4 mb-6">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="font-medium mb-2 text-blue-800">How to use:</h3>
+                  <ol className="list-decimal pl-5 space-y-1 text-sm text-blue-700">
+                    <li>Click "Open Meeting" to join your meeting in a new tab</li>
+                    <li>Join the meeting and enable your microphone there</li>
+                    <li>Come back to this tab</li>
+                    <li>Click "Start Translation" to begin real-time translation</li>
+                  </ol>
+                </div>
+              </div>
               
               <div className="flex justify-center mb-6">
                 {!translating ? (
