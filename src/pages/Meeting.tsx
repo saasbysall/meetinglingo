@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -10,7 +9,6 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
 
-// Import refactored components
 import MeetingHeader from '@/components/meeting/MeetingHeader';
 import MeetingInfo from '@/components/meeting/MeetingInfo';
 import MeetingStatus from '@/components/meeting/MeetingStatus';
@@ -37,7 +35,6 @@ export default function Meeting() {
   const [translatedText, setTranslatedText] = useState<string>("");
   const [transcripts, setTranscripts] = useState<{original: string, translated: string}[]>([]);
   
-  // Fetch meeting data
   useEffect(() => {
     if (!meetingId || authLoading) return;
     
@@ -68,7 +65,6 @@ export default function Meeting() {
         
         setMeeting(data);
         
-        // Fetch previous transcripts for this meeting
         const { data: transcriptData, error: transcriptError } = await supabase
           .from('transcripts')
           .select('*')
@@ -101,7 +97,6 @@ export default function Meeting() {
     fetchMeeting();
   }, [meetingId, user, authLoading, navigate, toast]);
   
-  // Check if user has microphone permission
   useEffect(() => {
     if (!userData) return;
     
@@ -112,10 +107,8 @@ export default function Meeting() {
   
   const handleMicrophonePermission = async () => {
     try {
-      // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Update user profile
       await supabase
         .from('users')
         .update({ mic_enabled: true })
@@ -153,25 +146,13 @@ export default function Meeting() {
   
   const handleStartTranslation = async () => {
     if (!meeting) return;
-    
-    // First check if the meeting is already open in another tab
+
     toast({
-      title: 'Important',
-      description: 'Make sure your meeting is active in another tab before starting translation',
+      title: "Starting Translation",
+      description: "Please ensure your meeting is active in another tab",
     });
-    
-    // Check if user has minutes available
-    if (userData?.minutes <= 0) {
-      toast({
-        title: 'No translation minutes available',
-        description: 'You have used all your available translation minutes.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
+
     try {
-      // Initialize translation service
       const service = new TranslationService(
         {
           sourceLanguage: meeting.source_language,
@@ -180,26 +161,26 @@ export default function Meeting() {
         },
         handleTranscriptUpdate
       );
-      
+
       const initialized = await service.initialize();
       if (!initialized) {
         throw new Error('Failed to initialize translation service');
       }
-      
+
       setTranslationService(service);
       await service.startTranslation();
       setTranslating(true);
-      
+
       toast({
-        title: 'Translation started',
-        description: 'Real-time translation is now active.',
+        title: "Translation Active",
+        description: "Real-time translation is now running",
       });
     } catch (error: any) {
       console.error('Error starting translation:', error);
       toast({
-        title: 'Error starting translation',
+        title: "Error Starting Translation",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     }
   };
@@ -217,7 +198,6 @@ export default function Meeting() {
         description: 'Translation service has been stopped.',
       });
       
-      // Update meeting end time
       await supabase
         .from('meetings')
         .update({ end_time: new Date().toISOString() })
@@ -236,7 +216,6 @@ export default function Meeting() {
     const newVolume = parseInt(e.target.value);
     setVolume(newVolume);
     
-    // Apply volume to translation service
     if (translationService) {
       translationService.setVolume(newVolume);
     }
