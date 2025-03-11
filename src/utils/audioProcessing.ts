@@ -68,16 +68,3 @@ export class AudioProcessor {
     }
   }
 }
-
-export const createAudioElement = (base64Audio: string): Promise<HTMLAudioElement> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const audio = new Audio();
-      audio.src = `data:audio/mp3;base64,${base64Audio}`;
-      audio.oncanplaythrough = () => resolve(audio);
-      audio.onerror = reject;
-    } catch (error) {
-      reject(error);
-    }
-  });
-};

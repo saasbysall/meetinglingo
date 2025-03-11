@@ -1,13 +1,7 @@
 
-import { AudioProcessor, createAudioElement } from '@/utils/audioProcessing';
-import { 
-  updateUserMinutes, 
-  speechToText, 
-  translateText, 
-  textToSpeech,
-  saveTranscript 
-} from './supabaseApi';
-import { useToast } from '@/components/ui/use-toast';
+import { updateUserMinutes } from './supabaseApi';
+import { AudioHandlingService } from './audioHandlingService';
+import { TranscriptService, TranscriptResult } from './transcriptService';
 
 export interface TranslationOptions {
   sourceLanguage: string;
@@ -16,9 +10,9 @@ export interface TranslationOptions {
 }
 
 class TranslationService {
-  private audioProcessor: AudioProcessor | null = null;
+  private audioHandlingService: AudioHandlingService | null = null;
+  private transcriptService: TranscriptService | null = null;
   private isTranslating = false;
-  private audioElement: HTMLAudioElement | null = null;
   private processingInterval: number | null = null;
   private audioQueue: string[] = [];
   private isProcessing = false;
@@ -35,17 +29,20 @@ class TranslationService {
     try {
       console.log('Initializing translation service...');
 
-      // Initialize audio processor
-      this.audioProcessor = new AudioProcessor(this.handleAudioData.bind(this));
-      const initialized = await this.audioProcessor.initialize();
+      // Initialize audio handling service
+      this.audioHandlingService = new AudioHandlingService(this.handleAudioData.bind(this));
+      const initialized = await this.audioHandlingService.initialize();
 
       if (!initialized) {
-        throw new Error('Failed to initialize audio processor');
+        throw new Error('Failed to initialize audio handling service');
       }
 
-      // Initialize audio output
-      this.audioElement = new Audio();
-      this.audioElement.volume = 0.7;
+      // Initialize transcript service
+      this.transcriptService = new TranscriptService(
+        this.options.sourceLanguage,
+        this.options.targetLanguage,
+        this.options.meetingId
+      );
 
       console.log('Translation service initialized successfully');
       return true;
@@ -55,24 +52,15 @@ class TranslationService {
     }
   }
 
-  private handleAudioData(audioData: Float32Array) {
+  private handleAudioData(audioData: string) {
     if (!this.isTranslating) return;
-
-    // Convert Float32Array to base64
-    const buffer = new ArrayBuffer(audioData.length * 2);
-    const view = new DataView(buffer);
-    for (let i = 0; i < audioData.length; i++) {
-      const multiplier = audioData[i] < 0 ? 0x8000 : 0x7FFF;
-      view.setInt16(i * 2, audioData[i] * multiplier, true);
-    }
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(buffer)));
     
     // Add to processing queue
-    this.audioQueue.push(base64Audio);
+    this.audioQueue.push(audioData);
   }
 
   async startTranslation() {
-    if (!this.audioProcessor) {
+    if (!this.audioHandlingService) {
       throw new Error('Translation service not initialized');
     }
 
@@ -92,55 +80,25 @@ class TranslationService {
     const audioData = this.audioQueue.shift();
 
     try {
-      if (audioData) {
+      if (audioData && this.transcriptService) {
         // Update user minutes
         if (this.options.meetingId) {
           await updateUserMinutes();
         }
 
-        // 1. Convert speech to text
-        const originalText = await speechToText(audioData, this.options.sourceLanguage);
-        if (!originalText) {
-          console.log('No speech detected in this chunk');
-          return;
-        }
-
-        console.log('Speech detected:', originalText);
-
-        // 2. Translate text
-        const translatedText = await translateText(
-          originalText,
-          this.options.sourceLanguage,
-          this.options.targetLanguage
-        );
-
-        console.log('Translated text:', translatedText);
-
-        // Update transcript
-        if (this.onTranscriptUpdate) {
-          this.onTranscriptUpdate(originalText, translatedText);
-        }
-
-        // 3. Convert to speech
-        const audioContent = await textToSpeech(translatedText, this.options.targetLanguage);
-
-        // 4. Play translated audio
-        if (audioContent && this.audioElement) {
-          try {
-            const audio = await createAudioElement(audioContent);
-            await audio.play();
-          } catch (error) {
-            console.error('Error playing audio:', error);
+        // Process the transcript
+        const result = await this.transcriptService.processTranscript(audioData);
+        
+        if (result) {
+          // Update transcript UI
+          if (this.onTranscriptUpdate) {
+            this.onTranscriptUpdate(result.originalText, result.translatedText);
           }
-        }
 
-        // Save transcript if in a meeting
-        if (this.options.meetingId) {
-          await saveTranscript(
-            this.options.meetingId,
-            { original: originalText, translated: translatedText },
-            this.options.targetLanguage
-          );
+          // Play translated audio
+          if (result.audioContent && this.audioHandlingService) {
+            await this.audioHandlingService.playAudio(result.audioContent);
+          }
         }
       }
     } catch (error) {
@@ -160,9 +118,9 @@ class TranslationService {
       this.processingInterval = null;
     }
 
-    if (this.audioProcessor) {
-      this.audioProcessor.stop();
-      this.audioProcessor = null;
+    if (this.audioHandlingService) {
+      this.audioHandlingService.stop();
+      this.audioHandlingService = null;
     }
 
     // Process any remaining audio in the queue
@@ -172,11 +130,8 @@ class TranslationService {
   }
 
   setVolume(volume: number) {
-    if (this.audioElement) {
-      this.audioElement.volume = volume / 100;
-    }
-    if (this.audioProcessor) {
-      this.audioProcessor.setVolume(volume / 100);
+    if (this.audioHandlingService) {
+      this.audioHandlingService.setVolume(volume);
     }
   }
 }
