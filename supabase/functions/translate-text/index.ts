@@ -47,7 +47,10 @@ serve(async (req) => {
             content: text
           }
         ],
-        temperature: 0.3
+        temperature: 0.3,
+        max_tokens: 500,  // Faster response with limited tokens
+        presence_penalty: 0,
+        frequency_penalty: 0,
       }),
     });
 

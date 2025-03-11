@@ -4,16 +4,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useUserData } from '@/hooks/useUserData';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import TranslationService from '@/services/translationService';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Mic, MicOff, ExternalLink, Volume2, Volume1, VolumeX } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
+// Import refactored components
+import MeetingHeader from '@/components/meeting/MeetingHeader';
+import MeetingInfo from '@/components/meeting/MeetingInfo';
+import MeetingStatus from '@/components/meeting/MeetingStatus';
+import InstructionsCard from '@/components/meeting/InstructionsCard';
+import TranslationButton from '@/components/meeting/TranslationButton';
+import TranscriptDisplay from '@/components/meeting/TranscriptDisplay';
+import ConversationHistory from '@/components/meeting/ConversationHistory';
+import PermissionDialog from '@/components/meeting/PermissionDialog';
 
 export default function Meeting() {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -237,12 +242,6 @@ export default function Meeting() {
     }
   };
   
-  const getVolumeIcon = () => {
-    if (volume === 0) return <VolumeX />;
-    if (volume < 50) return <Volume1 />;
-    return <Volume2 />;
-  };
-  
   if (loading || authLoading) {
     return <div className="h-screen flex justify-center items-center">Loading...</div>;
   }
@@ -258,148 +257,50 @@ export default function Meeting() {
         <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-8">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-darkblue">Meeting Translation</h1>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleOpenMeeting}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Open Meeting
-                </Button>
-              </div>
-              
-              <Separator className="my-6" />
+              <MeetingHeader 
+                meetingTitle="Meeting Translation" 
+                handleOpenMeeting={handleOpenMeeting} 
+              />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Platform</p>
-                    <p className="font-medium">{meeting.platform}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Source Language</p>
-                    <p className="font-medium">{meeting.source_language}</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Target Language</p>
-                    <p className="font-medium">{meeting.target_language}</p>
-                  </div>
-                </div>
+                <MeetingInfo 
+                  platform={meeting.platform}
+                  sourceLanguage={meeting.source_language}
+                  targetLanguage={meeting.target_language}
+                />
                 
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Available Minutes</p>
-                    <p className="font-medium">{userData?.minutes || 0} minutes</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Translation Status</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block w-3 h-3 rounded-full ${translating ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-                      <p className="font-medium">{translating ? 'Active' : 'Inactive'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-500">Output Volume</p>
-                      <div className="w-6 h-6">{getVolumeIcon()}</div>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                </div>
+                <MeetingStatus 
+                  minutes={userData?.minutes || 0}
+                  translating={translating}
+                  volume={volume}
+                  handleVolumeChange={handleVolumeChange}
+                />
               </div>
               
               <Separator className="my-6" />
               
-              <div className="space-y-4 mb-6">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h3 className="font-medium mb-2 text-blue-800">How to use:</h3>
-                  <ol className="list-decimal pl-5 space-y-1 text-sm text-blue-700">
-                    <li>Click "Open Meeting" to join your meeting in a new tab</li>
-                    <li>Join the meeting and enable your microphone there</li>
-                    <li>Come back to this tab</li>
-                    <li>Click "Start Translation" to begin real-time translation</li>
-                  </ol>
-                </div>
-              </div>
+              <InstructionsCard />
               
-              <div className="flex justify-center mb-6">
-                {!translating ? (
-                  <Button 
-                    className="bg-teal hover:bg-teal/90 text-white"
-                    size="lg" 
-                    onClick={handleStartTranslation}
-                    disabled={!userData?.mic_enabled || userData?.minutes <= 0}
-                  >
-                    <Mic className="h-4 w-4 mr-2" />
-                    Start Translation
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="destructive" 
-                    size="lg" 
-                    onClick={handleStopTranslation}
-                  >
-                    <MicOff className="h-4 w-4 mr-2" />
-                    Stop Translation
-                  </Button>
-                )}
-              </div>
+              <TranslationButton 
+                translating={translating}
+                micEnabled={userData?.mic_enabled || false}
+                availableMinutes={userData?.minutes || 0}
+                handleStartTranslation={handleStartTranslation}
+                handleStopTranslation={handleStopTranslation}
+              />
               
-              {/* Live transcript display */}
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Live Transcript</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-4 relative bg-gray-50">
-                    <h3 className="font-medium mb-2 text-sm text-gray-500">Source: {meeting.source_language}</h3>
-                    <ScrollArea className="h-32">
-                      <p>{originalText}</p>
-                    </ScrollArea>
-                  </Card>
-                  
-                  <Card className="p-4 relative bg-gray-50">
-                    <h3 className="font-medium mb-2 text-sm text-gray-500">Target: {meeting.target_language}</h3>
-                    <ScrollArea className="h-32">
-                      <p>{translatedText}</p>
-                    </ScrollArea>
-                  </Card>
-                </div>
-              </div>
+              <TranscriptDisplay 
+                originalText={originalText}
+                translatedText={translatedText}
+                sourceLanguage={meeting.source_language}
+                targetLanguage={meeting.target_language}
+              />
               
-              {/* Conversation history */}
-              {transcripts.length > 0 && (
-                <div className="mt-8 space-y-4">
-                  <h2 className="text-xl font-semibold">Conversation History</h2>
-                  <ScrollArea className="h-64 border rounded-md p-4">
-                    {transcripts.map((transcript, index) => (
-                      <div key={index} className="mb-4 pb-4 border-b last:border-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <h3 className="text-sm text-gray-500 mb-1">Original ({meeting.source_language})</h3>
-                            <p>{transcript.original}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm text-gray-500 mb-1">Translated ({meeting.target_language})</h3>
-                            <p>{transcript.translated}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                </div>
-              )}
+              <ConversationHistory 
+                transcripts={transcripts}
+                sourceLanguage={meeting.source_language}
+                targetLanguage={meeting.target_language}
+              />
             </div>
           </div>
         </div>
@@ -407,23 +308,11 @@ export default function Meeting() {
       
       <Footer />
       
-      <AlertDialog open={showPermissionModal} onOpenChange={setShowPermissionModal}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Microphone Permission Required</AlertDialogTitle>
-            <AlertDialogDescription>
-              MeetingLingo needs access to your microphone to provide real-time translation. 
-              Please allow microphone access when prompted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleMicrophonePermission}>
-              Grant Permission
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <PermissionDialog 
+        open={showPermissionModal}
+        onOpenChange={setShowPermissionModal}
+        handleMicrophonePermission={handleMicrophonePermission}
+      />
     </div>
   );
 }
