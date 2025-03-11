@@ -34,7 +34,9 @@ export default function Meeting() {
   const [originalText, setOriginalText] = useState<string>("");
   const [translatedText, setTranslatedText] = useState<string>("");
   const [transcripts, setTranscripts] = useState<{original: string, translated: string}[]>([]);
-  
+  const [inputVolume, setInputVolume] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   useEffect(() => {
     if (!meetingId || authLoading) return;
     
@@ -220,7 +222,16 @@ export default function Meeting() {
       translationService.setVolume(newVolume);
     }
   };
-  
+
+  useEffect(() => {
+    if (translationService) {
+      translationService.onVolumeUpdate = (volume: number) => {
+        setInputVolume(volume);
+        setIsSpeaking(volume > 15); // Consider speaking if volume is above 15%
+      };
+    }
+  }, [translationService]);
+
   if (loading || authLoading) {
     return <div className="h-screen flex justify-center items-center">Loading...</div>;
   }
@@ -252,6 +263,8 @@ export default function Meeting() {
                   minutes={userData?.minutes || 0}
                   translating={translating}
                   volume={volume}
+                  inputVolume={inputVolume}
+                  isSpeaking={isSpeaking}
                   handleVolumeChange={handleVolumeChange}
                 />
               </div>

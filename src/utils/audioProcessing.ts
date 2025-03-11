@@ -5,8 +5,13 @@ export class AudioProcessor {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private processorNode: ScriptProcessorNode | null = null;
   private gainNode: GainNode | null = null;
+  private analyserNode: AnalyserNode | null = null;
+  private volumeDataArray: Uint8Array | null = null;
 
-  constructor(private onAudioData: (data: Float32Array) => void) {}
+  constructor(
+    private onAudioData: (data: Float32Array) => void,
+    private onVolumeUpdate?: (volume: number) => void
+  ) {}
 
   async initialize() {
     try {
@@ -16,6 +21,7 @@ export class AudioProcessor {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          channelCount: 1,
           sampleRate: 44100
         }
       });
@@ -23,17 +29,29 @@ export class AudioProcessor {
       this.audioContext = new AudioContext();
       this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
       this.gainNode = this.audioContext.createGain();
+      this.analyserNode = this.audioContext.createAnalyser();
       this.processorNode = this.audioContext.createScriptProcessor(2048, 1, 1);
 
-      // Connect nodes: Source -> Gain -> Processor -> Destination
+      // Configure analyser for volume monitoring
+      this.analyserNode.fftSize = 256;
+      this.volumeDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+
+      // Connect nodes: Source -> Gain -> Analyser -> Processor -> Destination
       this.sourceNode.connect(this.gainNode);
-      this.gainNode.connect(this.processorNode);
+      this.gainNode.connect(this.analyserNode);
+      this.analyserNode.connect(this.processorNode);
       this.processorNode.connect(this.audioContext.destination);
 
-      // Process audio data
+      // Process audio data and update volume
       this.processorNode.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
         this.onAudioData(new Float32Array(inputData));
+
+        if (this.onVolumeUpdate && this.analyserNode && this.volumeDataArray) {
+          this.analyserNode.getByteFrequencyData(this.volumeDataArray);
+          const average = this.volumeDataArray.reduce((a, b) => a + b) / this.volumeDataArray.length;
+          this.onVolumeUpdate(Math.min(100, (average / 128) * 100));
+        }
       };
 
       return true;

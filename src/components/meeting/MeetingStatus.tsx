@@ -1,26 +1,25 @@
 
 import React from 'react';
-import { Volume1, Volume2, VolumeX } from 'lucide-react';
+import { Volume2 } from 'lucide-react';
+import VolumeIndicator from './VolumeIndicator';
 
 interface MeetingStatusProps {
   minutes: number;
   translating: boolean;
   volume: number;
+  inputVolume: number;
+  isSpeaking: boolean;
   handleVolumeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const MeetingStatus: React.FC<MeetingStatusProps> = ({ 
   minutes, 
   translating, 
-  volume, 
+  volume,
+  inputVolume,
+  isSpeaking,
   handleVolumeChange 
 }) => {
-  const getVolumeIcon = () => {
-    if (volume === 0) return <VolumeX />;
-    if (volume < 50) return <Volume1 />;
-    return <Volume2 />;
-  };
-
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -31,15 +30,21 @@ const MeetingStatus: React.FC<MeetingStatusProps> = ({
       <div className="space-y-2">
         <p className="text-sm text-gray-500">Translation Status</p>
         <div className="flex items-center gap-2">
-          <span className={`inline-block w-3 h-3 rounded-full ${translating ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+          <span className={`inline-block w-3 h-3 rounded-full ${
+            translating ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+          }`} />
           <p className="font-medium">{translating ? 'Active' : 'Inactive'}</p>
         </div>
       </div>
+
+      <VolumeIndicator volume={inputVolume} isSpeaking={isSpeaking} />
       
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">Output Volume</p>
-          <div className="w-6 h-6">{getVolumeIcon()}</div>
+          <div className="w-6 h-6">
+            <Volume2 />
+          </div>
         </div>
         <input
           type="range"
