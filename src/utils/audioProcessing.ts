@@ -7,11 +7,19 @@ export class AudioProcessor {
   private gainNode: GainNode | null = null;
   private analyserNode: AnalyserNode | null = null;
   private volumeDataArray: Uint8Array | null = null;
+  private volumeCallback: ((volume: number) => void) | null = null;
 
   constructor(
     private onAudioData: (data: Float32Array) => void,
-    private onVolumeUpdate?: (volume: number) => void
-  ) {}
+    onVolumeUpdate?: (volume: number) => void
+  ) {
+    this.volumeCallback = onVolumeUpdate || null;
+  }
+
+  // Method to update the volume callback if needed after initialization
+  setVolumeCallback(callback: (volume: number) => void) {
+    this.volumeCallback = callback;
+  }
 
   async initialize() {
     try {
@@ -47,10 +55,10 @@ export class AudioProcessor {
         const inputData = e.inputBuffer.getChannelData(0);
         this.onAudioData(new Float32Array(inputData));
 
-        if (this.onVolumeUpdate && this.analyserNode && this.volumeDataArray) {
+        if (this.volumeCallback && this.analyserNode && this.volumeDataArray) {
           this.analyserNode.getByteFrequencyData(this.volumeDataArray);
           const average = this.volumeDataArray.reduce((a, b) => a + b) / this.volumeDataArray.length;
-          this.onVolumeUpdate(Math.min(100, (average / 128) * 100));
+          this.volumeCallback(Math.min(100, (average / 128) * 100));
         }
       };
 

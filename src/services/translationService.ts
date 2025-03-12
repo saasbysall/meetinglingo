@@ -17,6 +17,9 @@ class TranslationService {
   private audioQueue: string[] = [];
   private isProcessing = false;
   private onTranscriptUpdate: ((original: string, translated: string) => void) | null = null;
+  
+  // Add the onVolumeUpdate property
+  onVolumeUpdate: ((volume: number) => void) | null = null;
 
   constructor(
     private options: TranslationOptions,
@@ -69,6 +72,11 @@ class TranslationService {
       this.processAudioQueue.bind(this),
       2000
     );
+
+    // Pass the onVolumeUpdate callback to the AudioHandlingService
+    if (this.audioHandlingService && this.onVolumeUpdate) {
+      this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
+    }
 
     console.log('Started translation service');
   }

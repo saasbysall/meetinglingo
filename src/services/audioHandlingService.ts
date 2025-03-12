@@ -1,16 +1,24 @@
-
 import { AudioProcessor } from '@/utils/audioProcessing';
 
 export class AudioHandlingService {
   private audioProcessor: AudioProcessor | null = null;
   private audioElement: HTMLAudioElement | null = null;
+  private volumeCallback: ((volume: number) => void) | null = null;
   
   constructor(private onAudioData: (data: string) => void) {}
   
   async initialize(): Promise<boolean> {
     try {
-      // Initialize audio processor
-      this.audioProcessor = new AudioProcessor(this.handleAudioData.bind(this));
+      // Initialize audio processor with volume callback
+      this.audioProcessor = new AudioProcessor(
+        this.handleAudioData.bind(this),
+        (volume: number) => {
+          if (this.volumeCallback) {
+            this.volumeCallback(volume);
+          }
+        }
+      );
+      
       const initialized = await this.audioProcessor.initialize();
 
       if (!initialized) {
@@ -25,6 +33,15 @@ export class AudioHandlingService {
     } catch (error) {
       console.error('Failed to initialize audio handling service:', error);
       return false;
+    }
+  }
+  
+  setVolumeCallback(callback: (volume: number) => void) {
+    this.volumeCallback = callback;
+    
+    // If the processor is already initialized, update its callback
+    if (this.audioProcessor) {
+      this.audioProcessor.setVolumeCallback(callback);
     }
   }
   
