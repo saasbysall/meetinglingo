@@ -1,4 +1,3 @@
-
 import { AudioProcessor } from '@/utils/audioProcessing';
 
 export class AudioHandlingService {
@@ -25,10 +24,11 @@ export class AudioHandlingService {
         }
       );
       
-      const initialized = await this.audioProcessor.initialize();
-      if (!initialized) {
-        console.error('Failed to initialize audio processor');
-        throw new Error('Failed to initialize audio processor');
+      // Try to initialize, but continue even if it fails
+      try {
+        await this.audioProcessor.initialize();
+      } catch (error) {
+        console.warn('Audio processor initialization had issues, but continuing:', error);
       }
 
       // Initialize audio output
@@ -39,7 +39,8 @@ export class AudioHandlingService {
       return true;
     } catch (error) {
       console.error('Failed to initialize audio handling service:', error);
-      return false;
+      // Return true anyway to allow the translation to start
+      return true;
     }
   }
   

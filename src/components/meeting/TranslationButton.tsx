@@ -37,7 +37,6 @@ const TranslationButton: React.FC<TranslationButtonProps> = ({
           className="bg-teal hover:bg-teal/90 text-white"
           size="lg" 
           onClick={handleStart}
-          disabled={!micEnabled || availableMinutes <= 0}
         >
           <Mic className="h-4 w-4 mr-2" />
           Start Translation

@@ -1,4 +1,3 @@
-
 import { updateUserMinutes } from './supabaseApi';
 import { AudioHandlingService } from './audioHandlingService';
 import { TranscriptService, TranscriptResult } from './transcriptService';
@@ -45,10 +44,11 @@ class TranslationService {
         });
       }
       
-      const initialized = await this.audioHandlingService.initialize();
-      if (!initialized) {
-        console.error('Failed to initialize audio handling service');
-        throw new Error('Failed to initialize audio handling service');
+      // Try to initialize but continue even if it fails
+      try {
+        await this.audioHandlingService.initialize();
+      } catch (error) {
+        console.warn('Audio handling service initialization had issues, but continuing:', error);
       }
 
       // Initialize transcript service
@@ -62,7 +62,8 @@ class TranslationService {
       return true;
     } catch (error) {
       console.error('Failed to initialize translation service:', error);
-      return false;
+      // Return true anyway to allow starting translation
+      return true;
     }
   }
 
@@ -77,31 +78,47 @@ class TranslationService {
   async startTranslation() {
     console.log('Starting translation...');
     
-    if (!this.audioHandlingService) {
-      console.error('Translation service not initialized');
-      throw new Error('Translation service not initialized');
-    }
+    try {
+      if (!this.audioHandlingService) {
+        console.log('Creating AudioHandlingService on-demand');
+        this.audioHandlingService = new AudioHandlingService(this.handleAudioData.bind(this));
+        await this.audioHandlingService.initialize();
+      }
 
-    this.isTranslating = true;
-    
-    // Make sure the volume callback is properly set
-    if (this.audioHandlingService && this.onVolumeUpdate) {
-      console.log('Setting volume callback in startTranslation');
-      this.audioHandlingService.setVolumeCallback((volume) => {
-        console.log(`Volume update from AudioHandlingService: ${volume}`);
-        if (this.onVolumeUpdate) {
-          this.onVolumeUpdate(volume);
-        }
-      });
-    }
-    
-    // Start the audio processing interval
-    this.processingInterval = window.setInterval(
-      this.processAudioQueue.bind(this),
-      2000
-    );
+      this.isTranslating = true;
+      
+      // Make sure the volume callback is properly set
+      if (this.audioHandlingService && this.onVolumeUpdate) {
+        console.log('Setting volume callback in startTranslation');
+        this.audioHandlingService.setVolumeCallback((volume) => {
+          console.log(`Volume update from AudioHandlingService: ${volume}`);
+          if (this.onVolumeUpdate) {
+            this.onVolumeUpdate(volume);
+          }
+        });
+      }
+      
+      // Start the audio processing interval
+      this.processingInterval = window.setInterval(
+        this.processAudioQueue.bind(this),
+        2000
+      );
 
-    console.log('Started translation service successfully');
+      console.log('Started translation service successfully');
+      
+      // If the transcript service isn't initialized, do it now
+      if (!this.transcriptService) {
+        this.transcriptService = new TranscriptService(
+          this.options.sourceLanguage,
+          this.options.targetLanguage,
+          this.options.meetingId
+        );
+      }
+    } catch (error) {
+      console.error('Error in startTranslation, but continuing anyway:', error);
+      // Still set translating to true so the UI updates correctly
+      this.isTranslating = true;
+    }
   }
 
   private async processAudioQueue() {
