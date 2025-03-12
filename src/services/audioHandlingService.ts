@@ -1,4 +1,3 @@
-
 import { AudioProcessor } from '@/utils/audioProcessing';
 
 export class AudioHandlingService {
@@ -21,7 +20,6 @@ export class AudioHandlingService {
       );
       
       const initialized = await this.audioProcessor.initialize();
-
       if (!initialized) {
         throw new Error('Failed to initialize audio processor');
       }
@@ -39,8 +37,6 @@ export class AudioHandlingService {
   
   setVolumeCallback(callback: (volume: number) => void) {
     this.volumeCallback = callback;
-    
-    // If the processor is already initialized, update its callback
     if (this.audioProcessor) {
       this.audioProcessor.setVolumeCallback(callback);
     }

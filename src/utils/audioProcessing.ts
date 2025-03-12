@@ -16,12 +16,11 @@ export class AudioProcessor {
     this.volumeCallback = onVolumeUpdate || null;
   }
 
-  // Method to update the volume callback if needed after initialization
   setVolumeCallback(callback: (volume: number) => void) {
     this.volumeCallback = callback;
   }
 
-  async initialize() {
+  async initialize(): Promise<boolean> {
     try {
       // Request microphone access with optimal settings for speech
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -50,16 +49,26 @@ export class AudioProcessor {
       this.analyserNode.connect(this.processorNode);
       this.processorNode.connect(this.audioContext.destination);
 
-      // Process audio data and update volume
+      // Set up volume monitoring
+      const checkVolume = () => {
+        if (this.analyserNode && this.volumeDataArray && this.volumeCallback) {
+          this.analyserNode.getByteFrequencyData(this.volumeDataArray);
+          const average = this.volumeDataArray.reduce((a, b) => a + b) / this.volumeDataArray.length;
+          const normalizedVolume = Math.min(100, (average / 128) * 100);
+          this.volumeCallback(normalizedVolume);
+        }
+        if (this.audioContext?.state === 'running') {
+          requestAnimationFrame(checkVolume);
+        }
+      };
+
+      // Start volume monitoring
+      checkVolume();
+
+      // Process audio data
       this.processorNode.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
         this.onAudioData(new Float32Array(inputData));
-
-        if (this.volumeCallback && this.analyserNode && this.volumeDataArray) {
-          this.analyserNode.getByteFrequencyData(this.volumeDataArray);
-          const average = this.volumeDataArray.reduce((a, b) => a + b) / this.volumeDataArray.length;
-          this.volumeCallback(Math.min(100, (average / 128) * 100));
-        }
       };
 
       return true;

@@ -17,8 +17,6 @@ class TranslationService {
   private audioQueue: string[] = [];
   private isProcessing = false;
   private onTranscriptUpdate: ((original: string, translated: string) => void) | null = null;
-  
-  // Add the onVolumeUpdate property
   onVolumeUpdate: ((volume: number) => void) | null = null;
 
   constructor(
@@ -34,8 +32,13 @@ class TranslationService {
 
       // Initialize audio handling service
       this.audioHandlingService = new AudioHandlingService(this.handleAudioData.bind(this));
+      
+      // Set volume callback
+      if (this.onVolumeUpdate) {
+        this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
+      }
+      
       const initialized = await this.audioHandlingService.initialize();
-
       if (!initialized) {
         throw new Error('Failed to initialize audio handling service');
       }
