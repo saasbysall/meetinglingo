@@ -19,7 +19,7 @@ export class AudioHandlingService {
         this.handleAudioData.bind(this),
         (volume: number) => {
           if (this.volumeCallback) {
-            console.log(`Volume update: ${volume}`);
+            console.log(`Volume update in AudioHandlingService: ${volume}`);
             this.volumeCallback(volume);
           }
         }
@@ -45,8 +45,15 @@ export class AudioHandlingService {
   setVolumeCallback(callback: (volume: number) => void) {
     console.log('Setting volume callback in AudioHandlingService');
     this.volumeCallback = callback;
+    
+    // Directly set the callback on the processor if it exists
     if (this.audioProcessor) {
-      this.audioProcessor.setVolumeCallback(callback);
+      this.audioProcessor.setVolumeCallback((volume: number) => {
+        console.log(`Volume in processor callback: ${volume}`);
+        if (this.volumeCallback) {
+          this.volumeCallback(volume);
+        }
+      });
     }
   }
   

@@ -14,11 +14,18 @@ export class AudioProcessor {
     private onAudioData: (data: Float32Array) => void,
     onVolumeUpdate?: (volume: number) => void
   ) {
+    console.log('AudioProcessor constructor called');
     this.volumeCallback = onVolumeUpdate || null;
   }
 
   setVolumeCallback(callback: (volume: number) => void) {
+    console.log('Setting volume callback in AudioProcessor');
     this.volumeCallback = callback;
+    
+    // Start volume monitoring if we weren't already
+    if (this.analyserNode && this.volumeDataArray && !this.volumeMonitoringId) {
+      this.startVolumeMonitoring();
+    }
   }
 
   async initialize(): Promise<boolean> {
@@ -54,7 +61,7 @@ export class AudioProcessor {
       this.analyserNode.connect(this.processorNode);
       this.processorNode.connect(this.audioContext.destination);
 
-      // Start continuous volume monitoring
+      // Start continuous volume monitoring immediately
       this.startVolumeMonitoring();
 
       // Process audio data
@@ -72,23 +79,43 @@ export class AudioProcessor {
   }
 
   private startVolumeMonitoring() {
+    console.log('Starting volume monitoring');
+    
+    // Cancel any existing monitoring
+    if (this.volumeMonitoringId) {
+      cancelAnimationFrame(this.volumeMonitoringId);
+    }
+    
     const checkVolume = () => {
-      if (!this.analyserNode || !this.volumeDataArray || !this.volumeCallback) {
+      if (!this.analyserNode || !this.volumeDataArray) {
+        console.log('Missing analyser or volume data array');
         return;
       }
       
       this.analyserNode.getByteFrequencyData(this.volumeDataArray);
       const sum = this.volumeDataArray.reduce((a, b) => a + b, 0);
       const average = sum / this.volumeDataArray.length;
-      const normalizedVolume = Math.min(100, (average / 128) * 100);
+      const normalizedVolume = Math.min(100, Math.max(0, (average / 128) * 100));
       
-      this.volumeCallback(normalizedVolume);
+      // Log volume for debugging
+      if (normalizedVolume > 5) {
+        console.log(`Current volume: ${normalizedVolume.toFixed(2)}`);
+      }
       
+      // Report volume through callback
+      if (this.volumeCallback) {
+        this.volumeCallback(normalizedVolume);
+      }
+      
+      // Continue monitoring as long as audio context is running
       if (this.audioContext?.state === 'running') {
         this.volumeMonitoringId = requestAnimationFrame(checkVolume);
+      } else {
+        console.log('Audio context not running, volume monitoring stopped');
       }
     };
     
+    // Start the monitoring loop
     this.volumeMonitoringId = requestAnimationFrame(checkVolume);
     console.log('Volume monitoring started');
   }
