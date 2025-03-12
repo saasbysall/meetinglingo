@@ -27,6 +27,7 @@ export class AudioHandlingService {
       
       const initialized = await this.audioProcessor.initialize();
       if (!initialized) {
+        console.error('Failed to initialize audio processor');
         throw new Error('Failed to initialize audio processor');
       }
 

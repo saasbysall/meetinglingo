@@ -37,11 +37,17 @@ class TranslationService {
       // Set volume callback from the start
       if (this.onVolumeUpdate) {
         console.log('Setting volume callback in TranslationService.initialize');
-        this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
+        this.audioHandlingService.setVolumeCallback((volume) => {
+          console.log(`Volume update in TranslationService: ${volume}`);
+          if (this.onVolumeUpdate) {
+            this.onVolumeUpdate(volume);
+          }
+        });
       }
       
       const initialized = await this.audioHandlingService.initialize();
       if (!initialized) {
+        console.error('Failed to initialize audio handling service');
         throw new Error('Failed to initialize audio handling service');
       }
 
@@ -61,6 +67,7 @@ class TranslationService {
   }
 
   private handleAudioData(audioData: string) {
+    console.log('Audio data received in translation service');
     if (!this.isTranslating) return;
     
     // Add to processing queue
@@ -68,24 +75,33 @@ class TranslationService {
   }
 
   async startTranslation() {
+    console.log('Starting translation...');
+    
     if (!this.audioHandlingService) {
+      console.error('Translation service not initialized');
       throw new Error('Translation service not initialized');
     }
 
-    console.log('Starting translation...');
     this.isTranslating = true;
+    
+    // Make sure the volume callback is properly set
+    if (this.audioHandlingService && this.onVolumeUpdate) {
+      console.log('Setting volume callback in startTranslation');
+      this.audioHandlingService.setVolumeCallback((volume) => {
+        console.log(`Volume update from AudioHandlingService: ${volume}`);
+        if (this.onVolumeUpdate) {
+          this.onVolumeUpdate(volume);
+        }
+      });
+    }
+    
+    // Start the audio processing interval
     this.processingInterval = window.setInterval(
       this.processAudioQueue.bind(this),
       2000
     );
 
-    // Update the volume callback after starting translation
-    if (this.audioHandlingService && this.onVolumeUpdate) {
-      console.log('Setting volume callback in startTranslation');
-      this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
-    }
-
-    console.log('Started translation service');
+    console.log('Started translation service successfully');
   }
 
   private async processAudioQueue() {

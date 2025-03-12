@@ -45,6 +45,12 @@ export class AudioProcessor {
       
       console.log('Microphone access granted');
 
+      // Check if there are actually audio tracks in the stream
+      if (this.mediaStream.getAudioTracks().length === 0) {
+        console.error('No audio tracks in the media stream');
+        throw new Error('No audio tracks available');
+      }
+
       this.audioContext = new AudioContext();
       this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
       this.gainNode = this.audioContext.createGain();

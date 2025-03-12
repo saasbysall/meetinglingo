@@ -18,13 +18,25 @@ const TranslationButton: React.FC<TranslationButtonProps> = ({
   handleStartTranslation, 
   handleStopTranslation 
 }) => {
+  const handleStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Start translation button clicked');
+    handleStartTranslation();
+  };
+
+  const handleStop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Stop translation button clicked');
+    handleStopTranslation();
+  };
+
   return (
     <div className="flex justify-center mb-6">
       {!translating ? (
         <Button 
           className="bg-teal hover:bg-teal/90 text-white"
           size="lg" 
-          onClick={handleStartTranslation}
+          onClick={handleStart}
           disabled={!micEnabled || availableMinutes <= 0}
         >
           <Mic className="h-4 w-4 mr-2" />
@@ -34,7 +46,7 @@ const TranslationButton: React.FC<TranslationButtonProps> = ({
         <Button 
           variant="destructive" 
           size="lg" 
-          onClick={handleStopTranslation}
+          onClick={handleStop}
         >
           <MicOff className="h-4 w-4 mr-2" />
           Stop Translation
