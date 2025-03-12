@@ -1,3 +1,4 @@
+
 import { AudioProcessor } from '@/utils/audioProcessing';
 
 export class AudioHandlingService {
@@ -5,15 +6,20 @@ export class AudioHandlingService {
   private audioElement: HTMLAudioElement | null = null;
   private volumeCallback: ((volume: number) => void) | null = null;
   
-  constructor(private onAudioData: (data: string) => void) {}
+  constructor(private onAudioData: (data: string) => void) {
+    console.log('AudioHandlingService created');
+  }
   
   async initialize(): Promise<boolean> {
     try {
+      console.log('Initializing AudioHandlingService...');
+      
       // Initialize audio processor with volume callback
       this.audioProcessor = new AudioProcessor(
         this.handleAudioData.bind(this),
         (volume: number) => {
           if (this.volumeCallback) {
+            console.log(`Volume update: ${volume}`);
             this.volumeCallback(volume);
           }
         }
@@ -28,6 +34,7 @@ export class AudioHandlingService {
       this.audioElement = new Audio();
       this.audioElement.volume = 0.7;
 
+      console.log('AudioHandlingService initialized successfully');
       return true;
     } catch (error) {
       console.error('Failed to initialize audio handling service:', error);
@@ -36,6 +43,7 @@ export class AudioHandlingService {
   }
   
   setVolumeCallback(callback: (volume: number) => void) {
+    console.log('Setting volume callback in AudioHandlingService');
     this.volumeCallback = callback;
     if (this.audioProcessor) {
       this.audioProcessor.setVolumeCallback(callback);
@@ -77,10 +85,13 @@ export class AudioHandlingService {
   }
   
   stop() {
+    console.log('Stopping AudioHandlingService');
     if (this.audioProcessor) {
       this.audioProcessor.stop();
       this.audioProcessor = null;
     }
+    this.volumeCallback = null;
+    console.log('AudioHandlingService stopped');
   }
 }
 

@@ -8,6 +8,7 @@ export class AudioProcessor {
   private analyserNode: AnalyserNode | null = null;
   private volumeDataArray: Uint8Array | null = null;
   private volumeCallback: ((volume: number) => void) | null = null;
+  private volumeMonitoringId: number | null = null;
 
   constructor(
     private onAudioData: (data: Float32Array) => void,
@@ -22,6 +23,8 @@ export class AudioProcessor {
 
   async initialize(): Promise<boolean> {
     try {
+      console.log('Initializing AudioProcessor...');
+      
       // Request microphone access with optimal settings for speech
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -32,6 +35,8 @@ export class AudioProcessor {
           sampleRate: 44100
         }
       });
+      
+      console.log('Microphone access granted');
 
       this.audioContext = new AudioContext();
       this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
@@ -49,21 +54,8 @@ export class AudioProcessor {
       this.analyserNode.connect(this.processorNode);
       this.processorNode.connect(this.audioContext.destination);
 
-      // Set up volume monitoring
-      const checkVolume = () => {
-        if (this.analyserNode && this.volumeDataArray && this.volumeCallback) {
-          this.analyserNode.getByteFrequencyData(this.volumeDataArray);
-          const average = this.volumeDataArray.reduce((a, b) => a + b) / this.volumeDataArray.length;
-          const normalizedVolume = Math.min(100, (average / 128) * 100);
-          this.volumeCallback(normalizedVolume);
-        }
-        if (this.audioContext?.state === 'running') {
-          requestAnimationFrame(checkVolume);
-        }
-      };
-
-      // Start volume monitoring
-      checkVolume();
+      // Start continuous volume monitoring
+      this.startVolumeMonitoring();
 
       // Process audio data
       this.processorNode.onaudioprocess = (e) => {
@@ -71,11 +63,34 @@ export class AudioProcessor {
         this.onAudioData(new Float32Array(inputData));
       };
 
+      console.log('AudioProcessor initialized successfully');
       return true;
     } catch (error) {
       console.error('Failed to initialize audio processor:', error);
       return false;
     }
+  }
+
+  private startVolumeMonitoring() {
+    const checkVolume = () => {
+      if (!this.analyserNode || !this.volumeDataArray || !this.volumeCallback) {
+        return;
+      }
+      
+      this.analyserNode.getByteFrequencyData(this.volumeDataArray);
+      const sum = this.volumeDataArray.reduce((a, b) => a + b, 0);
+      const average = sum / this.volumeDataArray.length;
+      const normalizedVolume = Math.min(100, (average / 128) * 100);
+      
+      this.volumeCallback(normalizedVolume);
+      
+      if (this.audioContext?.state === 'running') {
+        this.volumeMonitoringId = requestAnimationFrame(checkVolume);
+      }
+    };
+    
+    this.volumeMonitoringId = requestAnimationFrame(checkVolume);
+    console.log('Volume monitoring started');
   }
 
   setVolume(volume: number) {
@@ -85,21 +100,33 @@ export class AudioProcessor {
   }
 
   stop() {
+    console.log('Stopping AudioProcessor');
+    
+    if (this.volumeMonitoringId) {
+      cancelAnimationFrame(this.volumeMonitoringId);
+      this.volumeMonitoringId = null;
+    }
+    
     if (this.processorNode) {
       this.processorNode.disconnect();
       this.processorNode = null;
     }
+    
     if (this.sourceNode) {
       this.sourceNode.disconnect();
       this.sourceNode = null;
     }
+    
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
+    
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
     }
+    
+    console.log('AudioProcessor stopped');
   }
 }

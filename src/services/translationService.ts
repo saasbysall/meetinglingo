@@ -24,6 +24,7 @@ class TranslationService {
     onTranscriptUpdate?: (original: string, translated: string) => void
   ) {
     this.onTranscriptUpdate = onTranscriptUpdate;
+    console.log('TranslationService created');
   }
 
   async initialize(): Promise<boolean> {
@@ -33,8 +34,9 @@ class TranslationService {
       // Initialize audio handling service
       this.audioHandlingService = new AudioHandlingService(this.handleAudioData.bind(this));
       
-      // Set volume callback
+      // Set volume callback from the start
       if (this.onVolumeUpdate) {
+        console.log('Setting volume callback in TranslationService.initialize');
         this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
       }
       
@@ -70,14 +72,16 @@ class TranslationService {
       throw new Error('Translation service not initialized');
     }
 
+    console.log('Starting translation...');
     this.isTranslating = true;
     this.processingInterval = window.setInterval(
       this.processAudioQueue.bind(this),
       2000
     );
 
-    // Pass the onVolumeUpdate callback to the AudioHandlingService
+    // Update the volume callback after starting translation
     if (this.audioHandlingService && this.onVolumeUpdate) {
+      console.log('Setting volume callback in startTranslation');
       this.audioHandlingService.setVolumeCallback(this.onVolumeUpdate);
     }
 
@@ -138,6 +142,8 @@ class TranslationService {
     while (this.audioQueue.length > 0) {
       await this.processAudioQueue();
     }
+    
+    console.log('Translation service stopped');
   }
 
   setVolume(volume: number) {
