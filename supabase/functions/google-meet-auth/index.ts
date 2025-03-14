@@ -1,6 +1,6 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { google } from "https://esm.sh/googleapis@118.0.0";
+import { serve } from "std/http/server";
+import { google } from "googleapis";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
