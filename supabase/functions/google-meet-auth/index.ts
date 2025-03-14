@@ -10,11 +10,36 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { action, code, meetingLink } = await req.json();
+    console.log('Processing request to google-meet-auth function');
+    
+    // Parse request body
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('Request data:', JSON.stringify(requestData));
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { action, code, meetingLink } = requestData;
+    
+    // Validate required action parameter
+    if (!action) {
+      console.error('Missing required parameter: action');
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameter: action' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Get client credentials from environment variables
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -27,7 +52,17 @@ serve(async (req) => {
         clientSecret: !!clientSecret,
         redirectUri: !!redirectUri
       });
-      throw new Error('Missing Google API credentials. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in your environment variables.');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Missing Google API credentials. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in your environment variables.',
+          envVars: {
+            clientId: !!clientId,
+            clientSecret: !!clientSecret,
+            redirectUri: !!redirectUri
+          }
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Using Google credentials with redirect URI: ${redirectUri}`);
@@ -62,7 +97,11 @@ serve(async (req) => {
         
       case 'getTokens':
         if (!code) {
-          throw new Error('Authorization code is required');
+          console.error('Missing required parameter: code');
+          return new Response(
+            JSON.stringify({ error: 'Authorization code is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
         
         console.log(`Exchanging authorization code for tokens...`);
@@ -80,21 +119,41 @@ serve(async (req) => {
           );
         } catch (tokenError) {
           console.error('Token exchange error:', tokenError);
-          throw new Error(`Failed to exchange code for tokens: ${tokenError.message}`);
+          return new Response(
+            JSON.stringify({ error: `Failed to exchange code for tokens: ${tokenError.message}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
         
       case 'joinMeeting':
         if (!meetingLink) {
-          throw new Error('Meeting link is required');
+          console.error('Missing required parameter: meetingLink');
+          return new Response(
+            JSON.stringify({ error: 'Meeting link is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
         
         console.log(`Attempting to join meeting: ${meetingLink}`);
         
         // Extract meeting code from link
-        const meetingCode = extractMeetingCode(meetingLink);
+        let meetingCode;
+        try {
+          meetingCode = extractMeetingCode(meetingLink);
+        } catch (extractError) {
+          console.error('Error extracting meeting code:', extractError);
+          return new Response(
+            JSON.stringify({ error: extractError.message }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         
         if (!req.headers.get('Authorization')) {
-          throw new Error('Authorization token is required');
+          console.error('Missing authorization header');
+          return new Response(
+            JSON.stringify({ error: 'Authorization token is required' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
         
         // Set credentials from the provided token
@@ -121,18 +180,25 @@ serve(async (req) => {
           );
         } catch (joinError) {
           console.error('Error joining meeting:', joinError);
-          throw new Error(`Failed to join meeting: ${joinError.message}`);
+          return new Response(
+            JSON.stringify({ error: `Failed to join meeting: ${joinError.message}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
         
       default:
-        throw new Error('Invalid action');
+        console.error(`Invalid action: ${action}`);
+        return new Response(
+          JSON.stringify({ error: 'Invalid action. Supported actions: getAuthUrl, getTokens, joinMeeting' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
     }
   } catch (error) {
     console.error('Error in Google Meet function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 400, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
@@ -149,5 +215,5 @@ function extractMeetingCode(meetingLink: string): string {
     return match[1];
   }
   
-  throw new Error('Invalid Google Meet link format');
+  throw new Error('Invalid Google Meet link format. Expected format: https://meet.google.com/xxx-xxxx-xxx');
 }

@@ -32,27 +32,31 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
       setError(null);
       
       console.log('Requesting auth URL from edge function...');
-      const { data, error } = await supabase.functions.invoke('google-meet-auth', {
+      const { data, error: invokeError } = await supabase.functions.invoke('google-meet-auth', {
         body: { action: 'getAuthUrl' }
       });
       
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to get authorization URL');
+      if (invokeError) {
+        console.error('Edge function invoke error:', invokeError);
+        throw new Error(invokeError.message || 'Failed to get authorization URL');
       }
       
       if (!data?.authUrl) {
+        console.error('Invalid response data:', data);
         throw new Error('Invalid response from server: No authorization URL received');
       }
       
       console.log('Opening auth window with URL:', data.authUrl);
+      // Open the authorization URL in a new window
       const authWindow = window.open(data.authUrl, '_blank', 'width=600,height=600');
       
       if (!authWindow) {
         throw new Error('Popup blocked! Please allow popups for this site.');
       }
       
+      // Set up a message listener to receive the authorization code from the popup
       const messageHandler = async (event: MessageEvent) => {
+        console.log('Received message from auth window:', event.data);
         if (event.data?.type === 'GOOGLE_AUTH_CODE') {
           const code = event.data.code;
           console.log('Received authorization code, exchanging for tokens...');
@@ -63,10 +67,12 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
             });
             
             if (tokenError) {
+              console.error('Token exchange error:', tokenError);
               throw new Error(tokenError.message || 'Failed to exchange code for tokens');
             }
             
             if (!tokenData?.tokens?.access_token) {
+              console.error('Invalid token data:', tokenData);
               throw new Error('Invalid response: No access token received');
             }
             
@@ -92,11 +98,23 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
         }
       };
       
-      window.addEventListener('message', messageHandler, false);
+      window.addEventListener('message', messageHandler);
       
-      // Clean up the event listener when component unmounts or authorization completes
+      // Clean up the event listener after 5 minutes or when component unmounts
+      const timeoutId = setTimeout(() => {
+        window.removeEventListener('message', messageHandler);
+        if (authWindow && !authWindow.closed) {
+          authWindow.close();
+        }
+        if (!accessToken) {
+          setError('Authorization timeout. Please try again.');
+          setIsAuthorizing(false);
+        }
+      }, 300000); // 5 minutes
+      
       return () => {
-        window.removeEventListener('message', messageHandler, false);
+        window.removeEventListener('message', messageHandler);
+        clearTimeout(timeoutId);
       };
       
     } catch (error: any) {
