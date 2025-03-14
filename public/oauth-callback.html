@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth Callback</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f9fafb;
+      color: #1e293b;
+      text-align: center;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      margin-top: 0;
+      color: #0ea5e9;
+    }
+    p {
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Authorization Successful</h1>
+    <p>You have successfully authorized with Google.</p>
+    <p>You can close this window now.</p>
+  </div>
+
+  <script>
+    // Parse the URL to get the authorization code
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      // Send the code to the parent window
+      window.opener.postMessage({
+        type: 'GOOGLE_AUTH_CODE',
+        code: code
+      }, '*');
+      
+      // Close this window after a short delay
+      setTimeout(() => {
+        window.close();
+      }, 2000);
+    } else {
+      document.querySelector('.card').innerHTML = `
+        <h1 style="color: #ef4444;">Authorization Failed</h1>
+        <p>No authorization code was received.</p>
+        <p>Please try again.</p>
+      `;
+    }
+  </script>
+</body>
+</html>

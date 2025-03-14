@@ -22,8 +22,10 @@ serve(async (req) => {
     const redirectUri = Deno.env.get('GOOGLE_REDIRECT_URI');
     
     if (!clientId || !clientSecret || !redirectUri) {
-      throw new Error('Missing Google API credentials');
+      throw new Error('Missing Google API credentials. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in your environment variables.');
     }
+
+    console.log(`Using Google credentials - Client ID: ${clientId.substring(0, 5)}... Redirect URI: ${redirectUri}`);
 
     // Create OAuth2 client
     const oauth2Client = new google.auth.OAuth2(
@@ -45,6 +47,8 @@ serve(async (req) => {
           ],
         });
         
+        console.log(`Generated auth URL: ${authUrl.substring(0, 50)}...`);
+        
         return new Response(
           JSON.stringify({ authUrl }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,9 +59,13 @@ serve(async (req) => {
           throw new Error('Authorization code is required');
         }
         
+        console.log(`Exchanging authorization code for tokens...`);
+        
         // Exchange code for tokens
         const { tokens } = await oauth2Client.getToken(code);
         oauth2Client.setCredentials(tokens);
+        
+        console.log(`Tokens received successfully: ${tokens.access_token ? 'Access token present' : 'No access token'}`);
         
         return new Response(
           JSON.stringify({ tokens }),
@@ -69,7 +77,9 @@ serve(async (req) => {
           throw new Error('Meeting link is required');
         }
         
-        // Extract meeting code from link - this is a simplified example
+        console.log(`Attempting to join meeting: ${meetingLink}`);
+        
+        // Extract meeting code from link
         const meetingCode = extractMeetingCode(meetingLink);
         
         if (!req.headers.get('Authorization')) {
@@ -77,18 +87,21 @@ serve(async (req) => {
         }
         
         // Set credentials from the provided token
-        const token = req.headers.get('Authorization').split('Bearer ')[1];
+        const token = req.headers.get('Authorization')!.split('Bearer ')[1];
         oauth2Client.setCredentials({ access_token: token });
+        
+        console.log(`Using access token to join meeting with code: ${meetingCode}`);
         
         // Initialize Google Meet API
         const meetService = google.meet({ version: 'v2', auth: oauth2Client });
         
         // Join the meeting
-        // This is a simplified example - actual implementation may vary
         const response = await meetService.spaces.join({
           name: `spaces/${meetingCode}`,
           requestBody: { regionCode: "US" }
         });
+        
+        console.log(`Successfully joined meeting: ${JSON.stringify(response.data).substring(0, 100)}...`);
         
         return new Response(
           JSON.stringify({ success: true, meetingDetails: response.data }),

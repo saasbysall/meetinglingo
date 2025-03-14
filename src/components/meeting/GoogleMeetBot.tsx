@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Robot, Link as LinkIcon, RotateCw } from 'lucide-react';
+import { Bot, Link as LinkIcon, RotateCw } from 'lucide-react';
 
 interface GoogleMeetBotProps {
   sourceLanguage: string;
@@ -24,35 +23,28 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Handle Google authorization
   const handleAuthorize = async () => {
     try {
       setIsAuthorizing(true);
       
-      // Get auth URL from edge function
       const { data, error } = await supabase.functions.invoke('google-meet-auth', {
         body: { action: 'getAuthUrl' }
       });
       
       if (error) throw new Error(error.message);
       
-      // Open auth URL in a new window
       const authWindow = window.open(data.authUrl, '_blank', 'width=600,height=600');
       
-      // Set up event listener for the auth callback
       window.addEventListener('message', async (event) => {
-        // Check origin for security
         if (event.data?.type === 'GOOGLE_AUTH_CODE') {
           const code = event.data.code;
           
-          // Exchange code for tokens
           const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-meet-auth', {
             body: { action: 'getTokens', code }
           });
           
           if (tokenError) throw new Error(tokenError.message);
           
-          // Save access token
           setAccessToken(tokenData.tokens.access_token);
           
           toast({
@@ -60,7 +52,6 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
             description: "You can now join Google Meet meetings with the translation bot"
           });
           
-          // Close auth window if still open
           if (authWindow && !authWindow.closed) {
             authWindow.close();
           }
@@ -79,7 +70,6 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
     }
   };
 
-  // Handle joining the meeting
   const handleJoinMeeting = async () => {
     if (!meetingLink) {
       return toast({
@@ -100,7 +90,6 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
     try {
       setIsJoiningMeeting(true);
       
-      // Call edge function to join the meeting
       const { data, error } = await supabase.functions.invoke('google-meet-auth', {
         body: { 
           action: 'joinMeeting', 
@@ -118,7 +107,6 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
         description: "Translation bot has joined the meeting"
       });
       
-      // Notify parent component
       onBotJoined(true);
       
     } catch (error) {
@@ -139,7 +127,7 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Robot className="mr-2 h-5 w-5 text-teal" />
+          <Bot className="mr-2 h-5 w-5 text-teal" />
           Google Meet Translation Bot
         </CardTitle>
         <CardDescription>
