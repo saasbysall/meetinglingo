@@ -8,4 +8,4 @@ import_map = "./import_map.json"
 
 [functions.translate-text]
 verify_jwt = false
-
+import_map = "./import_map.json"
