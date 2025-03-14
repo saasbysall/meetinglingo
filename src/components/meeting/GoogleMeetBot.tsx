@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Bot, Link as LinkIcon, RotateCw } from 'lucide-react';
+import { Bot, Link as LinkIcon, RotateCw, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface GoogleMeetBotProps {
   sourceLanguage: string;
@@ -21,45 +23,85 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [isJoiningMeeting, setIsJoiningMeeting] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleAuthorize = async () => {
     try {
       setIsAuthorizing(true);
+      setError(null);
       
+      console.log('Requesting auth URL from edge function...');
       const { data, error } = await supabase.functions.invoke('google-meet-auth', {
         body: { action: 'getAuthUrl' }
       });
       
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to get authorization URL');
+      }
       
+      if (!data?.authUrl) {
+        throw new Error('Invalid response from server: No authorization URL received');
+      }
+      
+      console.log('Opening auth window with URL:', data.authUrl);
       const authWindow = window.open(data.authUrl, '_blank', 'width=600,height=600');
       
-      window.addEventListener('message', async (event) => {
+      if (!authWindow) {
+        throw new Error('Popup blocked! Please allow popups for this site.');
+      }
+      
+      const messageHandler = async (event: MessageEvent) => {
         if (event.data?.type === 'GOOGLE_AUTH_CODE') {
           const code = event.data.code;
+          console.log('Received authorization code, exchanging for tokens...');
           
-          const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-meet-auth', {
-            body: { action: 'getTokens', code }
-          });
-          
-          if (tokenError) throw new Error(tokenError.message);
-          
-          setAccessToken(tokenData.tokens.access_token);
-          
-          toast({
-            title: "Google authorization successful",
-            description: "You can now join Google Meet meetings with the translation bot"
-          });
-          
-          if (authWindow && !authWindow.closed) {
-            authWindow.close();
+          try {
+            const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-meet-auth', {
+              body: { action: 'getTokens', code }
+            });
+            
+            if (tokenError) {
+              throw new Error(tokenError.message || 'Failed to exchange code for tokens');
+            }
+            
+            if (!tokenData?.tokens?.access_token) {
+              throw new Error('Invalid response: No access token received');
+            }
+            
+            setAccessToken(tokenData.tokens.access_token);
+            
+            toast({
+              title: "Google authorization successful",
+              description: "You can now join Google Meet meetings with the translation bot"
+            });
+            
+            if (authWindow && !authWindow.closed) {
+              authWindow.close();
+            }
+          } catch (tokenExchangeError: any) {
+            console.error('Token exchange error:', tokenExchangeError);
+            setError(tokenExchangeError.message || 'Failed to complete authorization');
+            toast({
+              title: "Authorization failed",
+              description: tokenExchangeError.message || "Failed to exchange authorization code for tokens",
+              variant: "destructive"
+            });
           }
         }
-      }, false);
+      };
       
-    } catch (error) {
+      window.addEventListener('message', messageHandler, false);
+      
+      // Clean up the event listener when component unmounts or authorization completes
+      return () => {
+        window.removeEventListener('message', messageHandler, false);
+      };
+      
+    } catch (error: any) {
       console.error('Google auth error:', error);
+      setError(error.message || "Failed to authorize with Google");
       toast({
         title: "Authorization failed",
         description: error.message || "Failed to authorize with Google",
@@ -89,6 +131,7 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
     
     try {
       setIsJoiningMeeting(true);
+      setError(null);
       
       const { data, error } = await supabase.functions.invoke('google-meet-auth', {
         body: { 
@@ -100,7 +143,7 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
         }
       });
       
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message || 'Failed to join meeting');
       
       toast({
         title: "Successfully joined meeting",
@@ -109,8 +152,9 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
       
       onBotJoined(true);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Join meeting error:', error);
+      setError(error.message || "The bot could not join the meeting");
       toast({
         title: "Failed to join meeting",
         description: error.message || "The bot could not join the meeting",
@@ -136,6 +180,13 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div>
           <Button 
             onClick={handleAuthorize} 

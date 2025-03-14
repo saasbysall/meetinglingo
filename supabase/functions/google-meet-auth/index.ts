@@ -22,10 +22,15 @@ serve(async (req) => {
     const redirectUri = Deno.env.get('GOOGLE_REDIRECT_URI');
     
     if (!clientId || !clientSecret || !redirectUri) {
+      console.error('Missing environment variables:', {
+        clientId: !!clientId,
+        clientSecret: !!clientSecret,
+        redirectUri: !!redirectUri
+      });
       throw new Error('Missing Google API credentials. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in your environment variables.');
     }
 
-    console.log(`Using Google credentials - Client ID: ${clientId.substring(0, 5)}... Redirect URI: ${redirectUri}`);
+    console.log(`Using Google credentials with redirect URI: ${redirectUri}`);
 
     // Create OAuth2 client
     const oauth2Client = new google.auth.OAuth2(
@@ -45,6 +50,7 @@ serve(async (req) => {
             'https://www.googleapis.com/auth/meetings.space.joined',
             'https://www.googleapis.com/auth/meetings.space.participant',
           ],
+          prompt: 'consent', // Force showing the consent screen
         });
         
         console.log(`Generated auth URL: ${authUrl.substring(0, 50)}...`);
@@ -61,16 +67,21 @@ serve(async (req) => {
         
         console.log(`Exchanging authorization code for tokens...`);
         
-        // Exchange code for tokens
-        const { tokens } = await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
-        
-        console.log(`Tokens received successfully: ${tokens.access_token ? 'Access token present' : 'No access token'}`);
-        
-        return new Response(
-          JSON.stringify({ tokens }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        try {
+          // Exchange code for tokens
+          const { tokens } = await oauth2Client.getToken(code);
+          oauth2Client.setCredentials(tokens);
+          
+          console.log(`Tokens received successfully: ${tokens.access_token ? 'Access token present' : 'No access token'}`);
+          
+          return new Response(
+            JSON.stringify({ tokens }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (tokenError) {
+          console.error('Token exchange error:', tokenError);
+          throw new Error(`Failed to exchange code for tokens: ${tokenError.message}`);
+        }
         
       case 'joinMeeting':
         if (!meetingLink) {
@@ -92,21 +103,26 @@ serve(async (req) => {
         
         console.log(`Using access token to join meeting with code: ${meetingCode}`);
         
-        // Initialize Google Meet API
-        const meetService = google.meet({ version: 'v2', auth: oauth2Client });
-        
-        // Join the meeting
-        const response = await meetService.spaces.join({
-          name: `spaces/${meetingCode}`,
-          requestBody: { regionCode: "US" }
-        });
-        
-        console.log(`Successfully joined meeting: ${JSON.stringify(response.data).substring(0, 100)}...`);
-        
-        return new Response(
-          JSON.stringify({ success: true, meetingDetails: response.data }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        try {
+          // Initialize Google Meet API
+          const meetService = google.meet({ version: 'v2', auth: oauth2Client });
+          
+          // Join the meeting
+          const response = await meetService.spaces.join({
+            name: `spaces/${meetingCode}`,
+            requestBody: { regionCode: "US" }
+          });
+          
+          console.log(`Successfully joined meeting: ${JSON.stringify(response.data).substring(0, 100)}...`);
+          
+          return new Response(
+            JSON.stringify({ success: true, meetingDetails: response.data }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (joinError) {
+          console.error('Error joining meeting:', joinError);
+          throw new Error(`Failed to join meeting: ${joinError.message}`);
+        }
         
       default:
         throw new Error('Invalid action');
