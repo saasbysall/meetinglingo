@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import NewMeeting from "./pages/NewMeeting";
 import Meeting from "./pages/Meeting";
 import History from "./pages/History";
+import BotMeeting from "./pages/BotMeeting";
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/meeting/new" element={<ProtectedRoute><NewMeeting /></ProtectedRoute>} />
+      <Route path="/meeting/bot" element={<ProtectedRoute><BotMeeting /></ProtectedRoute>} />
       <Route path="/meeting/:meetingId" element={<ProtectedRoute><Meeting /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
