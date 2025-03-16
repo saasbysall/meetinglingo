@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 
 type AuthContextType = {
   session: Session | null;
@@ -11,6 +11,10 @@ type AuthContextType = {
     data: { session: Session | null } | null;
   }>;
   signUp: (email: string, password: string, username: string) => Promise<{
+    error: any | null;
+    data: { session: Session | null } | null;
+  }>;
+  signInWithGoogle: () => Promise<{
     error: any | null;
     data: { session: Session | null } | null;
   }>;
@@ -67,6 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  const signInWithGoogle = async () => {
+    const result = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/meeting/bot`,
+        scopes: 'https://www.googleapis.com/auth/meetings.space.created https://www.googleapis.com/auth/meetings.space.joined https://www.googleapis.com/auth/meetings.space.participant'
+      }
+    });
+    
+    return {
+      data: { session: null }, // Will be set by the onAuthStateChange event after redirect
+      error: result.error
+    };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -76,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     loading,
   };
