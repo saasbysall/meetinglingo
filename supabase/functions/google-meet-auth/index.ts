@@ -40,6 +40,15 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Simple ping action to test connectivity
+    if (action === 'ping') {
+      console.log('Ping request received, responding with pong');
+      return new Response(
+        JSON.stringify({ status: 'ok', message: 'pong' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Get client credentials from environment variables
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -189,7 +198,7 @@ serve(async (req) => {
       default:
         console.error(`Invalid action: ${action}`);
         return new Response(
-          JSON.stringify({ error: 'Invalid action. Supported actions: getAuthUrl, getTokens, joinMeeting' }),
+          JSON.stringify({ error: 'Invalid action. Supported actions: ping, getAuthUrl, getTokens, joinMeeting' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }

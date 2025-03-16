@@ -26,10 +26,37 @@ const GoogleMeetBot: React.FC<GoogleMeetBotProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Function to check if the Edge Function is accessible
+  const checkEdgeFunctionAccess = async () => {
+    try {
+      console.log('Testing edge function connectivity...');
+      const { data, error: invokeError } = await supabase.functions.invoke('google-meet-auth', {
+        body: { action: 'ping' }
+      });
+      
+      if (invokeError) {
+        console.error('Edge function connectivity test failed:', invokeError);
+        return false;
+      }
+      
+      console.log('Edge function connectivity test succeeded:', data);
+      return true;
+    } catch (error) {
+      console.error('Edge function connectivity test error:', error);
+      return false;
+    }
+  };
+
   const handleAuthorize = async () => {
     try {
       setIsAuthorizing(true);
       setError(null);
+      
+      // First check if we can access the edge function
+      const canAccessFunction = await checkEdgeFunctionAccess();
+      if (!canAccessFunction) {
+        throw new Error('Could not connect to the Google Meet service. Please try again later.');
+      }
       
       console.log('Requesting auth URL from edge function...');
       const { data, error: invokeError } = await supabase.functions.invoke('google-meet-auth', {

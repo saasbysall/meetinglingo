@@ -36,6 +36,17 @@
     .error {
       color: #ef4444;
     }
+    .debug {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: #f1f5f9;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      overflow: auto;
+      max-height: 200px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +63,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
+    const debugInfo = {
+      url: window.location.href,
+      hasOpener: !!window.opener,
+      hasCode: !!code,
+      hasError: !!error,
+      redirectUri: document.referrer
+    };
     
     // Function to update the card with success message
     function showSuccess() {
@@ -68,6 +86,10 @@
         <h1 class="error">Authorization Failed</h1>
         <p class="error">${message}</p>
         <p>Please try again or contact support if the issue persists.</p>
+        <div class="debug">
+          <strong>Debug info:</strong>
+          ${JSON.stringify(debugInfo, null, 2)}
+        </div>
       `;
     }
     
@@ -79,6 +101,8 @@
     else if (code) {
       // Try to send the code to the parent window
       try {
+        console.log('Received authorization code, attempting to send to parent window');
+        
         if (window.opener && !window.opener.closed) {
           console.log('Sending code to parent window');
           window.opener.postMessage({
@@ -99,11 +123,15 @@
             <p>You have successfully authorized with Google.</p>
             <p>Please return to the main application window to continue.</p>
             <p>You can close this window now.</p>
+            <div class="debug">
+              <strong>Debug info:</strong>
+              ${JSON.stringify(debugInfo, null, 2)}
+            </div>
           `;
         }
       } catch (err) {
         console.error('Error sending message to parent:', err);
-        showError('Failed to communicate with the main application. Please return to the main window and try again.');
+        showError(`Failed to communicate with the main application: ${err.message}`);
       }
     } else {
       // No code or error
