@@ -51,10 +51,14 @@ export default function Signup() {
     setError(null);
     
     try {
+      console.log("Starting Google sign-up process...");
       const { error } = await signInWithGoogle();
       if (error) throw error;
+      
+      console.log("Google sign-up successful, waiting for redirect...");
       // No toast needed here as the page will redirect
     } catch (error: any) {
+      console.error("Google sign-up error:", error);
       setError(error.message || "Failed to sign up with Google. Please try again.");
       toast({
         title: "Google signup failed",

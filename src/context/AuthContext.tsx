@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        console.log("Auth state changed:", _event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -72,18 +73,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const result = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/meeting/bot`,
-        scopes: 'https://www.googleapis.com/auth/meetings.space.created https://www.googleapis.com/auth/meetings.space.joined https://www.googleapis.com/auth/meetings.space.participant'
+    try {
+      console.log('Starting Google sign in process');
+      
+      const result = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/meeting/bot`,
+          scopes: 'https://www.googleapis.com/auth/meetings.space.created https://www.googleapis.com/auth/meetings.space.joined https://www.googleapis.com/auth/meetings.space.participant'
+        }
+      });
+      
+      console.log('Google sign in response:', result);
+      
+      if (result.error) {
+        console.error('Google sign in error:', result.error);
+        throw result.error;
       }
-    });
-    
-    return {
-      data: { session: null }, // Will be set by the onAuthStateChange event after redirect
-      error: result.error
-    };
+      
+      return {
+        data: { session: null }, // Will be set by the onAuthStateChange event after redirect
+        error: null
+      };
+    } catch (error) {
+      console.error('Unexpected error during Google sign in:', error);
+      return {
+        data: { session: null },
+        error: error
+      };
+    }
   };
 
   const signOut = async () => {

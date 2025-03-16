@@ -50,10 +50,14 @@ export default function Login() {
     setError(null);
     
     try {
+      console.log("Starting Google sign-in process...");
       const { error } = await signInWithGoogle();
       if (error) throw error;
+      
+      console.log("Google sign-in successful, waiting for redirect...");
       // No toast needed here as the page will redirect
     } catch (error: any) {
+      console.error("Google sign-in error:", error);
       setError(error.message || "Failed to login with Google. Please try again.");
       toast({
         title: "Google login failed",
