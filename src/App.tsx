@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,7 +40,7 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (user) {
-    return <Navigate to="/meeting/new" replace />;
+    return <Navigate to="/meeting/bot" replace />;
   }
   
   return <>{children}</>;

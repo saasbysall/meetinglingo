@@ -29,7 +29,7 @@ export default function Signup() {
         title: "Account created!",
         description: "Your account has been successfully created.",
       });
-      navigate('/dashboard');
+      navigate('/meeting/bot');
     } catch (error: any) {
       toast({
         title: "Signup failed",

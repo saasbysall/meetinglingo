@@ -28,7 +28,7 @@ export default function Login() {
         title: "Success!",
         description: "You have successfully logged in.",
       });
-      navigate('/dashboard');
+      navigate('/meeting/bot');
     } catch (error: any) {
       toast({
         title: "Login failed",
