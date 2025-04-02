@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle2 } from 'lucide-react';
 
 export default function AccountInfo() {
   const [name, setName] = useState('');
@@ -36,7 +35,7 @@ export default function AccountInfo() {
     setIsLoading(true);
 
     try {
-      // Save user info to profile
+      // Save user info to profiles table
       const { error } = await supabase
         .from('profiles')
         .upsert({
@@ -45,7 +44,8 @@ export default function AccountInfo() {
           company_name: company,
           company_size: companySize,
           usage_goal: goal,
-          receive_updates: receiveUpdates
+          receive_updates: receiveUpdates,
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;

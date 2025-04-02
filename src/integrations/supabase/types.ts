@@ -53,6 +53,39 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          company_name: string | null
+          company_size: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          receive_updates: boolean | null
+          updated_at: string | null
+          usage_goal: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          receive_updates?: boolean | null
+          updated_at?: string | null
+          usage_goal?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          receive_updates?: boolean | null
+          updated_at?: string | null
+          usage_goal?: string | null
+        }
+        Relationships: []
+      }
       transcripts: {
         Row: {
           created_at: string | null
