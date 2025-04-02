@@ -35,9 +35,9 @@ export default function AccountInfo() {
     setIsLoading(true);
 
     try {
-      // Save user info to profiles table
+      // Save user info to profiles table using type assertion to work around type issues
       const { error } = await supabase
-        .from('profiles')
+        .from('profiles' as any)
         .upsert({
           id: user.id,
           full_name: name,
@@ -46,7 +46,7 @@ export default function AccountInfo() {
           usage_goal: goal,
           receive_updates: receiveUpdates,
           updated_at: new Date().toISOString()
-        });
+        } as any);
 
       if (error) throw error;
 
