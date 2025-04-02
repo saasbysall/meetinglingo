@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import { Link2, Mic, Languages } from 'lucide-react';
 import GoogleMeetBot from '@/components/meeting/GoogleMeetBot';
-import { Languages } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Language options
 const sourceLanguages = [
   { value: 'en-GB', label: 'English (UK)' },
   { value: 'en-US', label: 'English (US)' },
@@ -23,57 +23,128 @@ const sourceLanguages = [
   { value: 'ja-JP', label: 'Japanese' },
   { value: 'zh-CN', label: 'Chinese (Simplified)' },
   { value: 'ru-RU', label: 'Russian' },
+  // More languages can be added here
 ];
 
 export default function BotMeeting() {
-  const [sourceLanguage, setSourceLanguage] = useState('en-GB');
+  const [meetingLink, setMeetingLink] = useState('');
+  const [sourceLanguage, setSourceLanguage] = useState('en-US');
   const [targetLanguage, setTargetLanguage] = useState('es-ES');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMicPermissionDialog, setShowMicPermissionDialog] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
   const [botJoined, setBotJoined] = useState(false);
-  const [meetingId, setMeetingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('new-meeting');
   
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Redirect to login if not authenticated
+  // Check if user is authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login');
     }
   }, [user, authLoading, navigate]);
 
-  // Handle bot joining event
-  const handleBotJoined = async (success: boolean) => {
-    setBotJoined(success);
-    
-    if (success) {
+  // Check for microphone permissions
+  useEffect(() => {
+    const checkMicPermissions = async () => {
       try {
-        // Save bot meeting in database
-        const { data, error } = await supabase
-          .from('meetings')
-          .insert({
-            user_id: user?.id,
-            meeting_link: "bot_meeting", // Special flag for bot meetings
-            platform: "google_meet",
-            source_language: sourceLanguage,
-            target_language: targetLanguage,
-            is_bot: true
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        
-        setMeetingId(data.id);
-        
-      } catch (error: any) {
-        console.error('Error saving bot meeting:', error);
-        toast({
-          title: "Failed to save meeting",
-          description: error.message || "There was an error saving the meeting",
-          variant: "destructive"
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setPermissionGranted(true);
+        // Stop the stream immediately since we're just checking permissions
+        stream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        setPermissionGranted(false);
+        // Only show the dialog if we're sure permission isn't granted
+        setShowMicPermissionDialog(true);
       }
+    };
+
+    if (user) {
+      checkMicPermissions();
+    }
+  }, [user]);
+
+  const requestMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setPermissionGranted(true);
+      setShowMicPermissionDialog(false);
+      // Stop the stream immediately since we're just checking permissions
+      stream.getTracks().forEach(track => track.stop());
+      
+      toast({
+        title: "Microphone access granted",
+        description: "You can now use the translation service."
+      });
+    } catch (err) {
+      toast({
+        title: "Microphone access denied",
+        description: "You need to allow microphone access to use the translation service.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleJoinMeeting = async () => {
+    if (!meetingLink) {
+      return toast({
+        title: "Meeting link required",
+        description: "Please enter a valid meeting link",
+        variant: "destructive"
+      });
+    }
+
+    if (!permissionGranted) {
+      return setShowMicPermissionDialog(true);
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Save the meeting info to Supabase
+      const { data, error } = await supabase
+        .from('meetings')
+        .insert({
+          user_id: user!.id,
+          meeting_link: meetingLink,
+          platform: 'google-meet',
+          source_language: sourceLanguage,
+          target_language: targetLanguage
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Meeting created",
+        description: "You can now join the meeting"
+      });
+      
+      // Set the tab to 'active-meeting' to show the bot
+      setActiveTab('active-meeting');
+    } catch (error: any) {
+      console.error('Error creating meeting:', error);
+      toast({
+        title: "Failed to create meeting",
+        description: error.message || "There was an error creating your meeting",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBotJoined = (success: boolean) => {
+    setBotJoined(success);
+    if (success) {
+      toast({
+        title: "Bot joined the meeting",
+        description: "Translation is now active"
+      });
     }
   };
 
@@ -82,94 +153,191 @@ export default function BotMeeting() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-grow flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-b from-gray-50 to-blue-50">
-        <div className="w-full max-w-4xl space-y-8">
-          <div className="text-center">
-            <Languages className="h-12 w-12 mx-auto text-teal" />
-            <h2 className="mt-4 text-3xl font-bold text-darkblue">AI Translation Bot</h2>
-            <p className="mt-2 text-gray-600">
-              Let our AI bot join your meeting and translate in real-time
-            </p>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Simple sidebar-like layout */}
+      <div className="flex flex-grow">
+        {/* Left sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-darkblue flex items-center">
+              <span className="mr-2">Meeting</span><span className="text-teal">Lingo</span>
+            </h1>
           </div>
           
-          {!botJoined ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-md">
-                <h3 className="text-xl font-semibold mb-4">Translation Settings</h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="source-language" className="block text-sm font-medium text-gray-700">
-                      Source Language (what the bot will hear)
-                    </label>
-                    <Select 
-                      value={sourceLanguage} 
-                      onValueChange={setSourceLanguage}
-                    >
-                      <SelectTrigger className="w-full mt-1" id="source-language">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sourceLanguages.map((lang) => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="target-language" className="block text-sm font-medium text-gray-700">
-                      Target Language (what the bot will speak)
-                    </label>
-                    <Select 
-                      value={targetLanguage} 
-                      onValueChange={setTargetLanguage}
-                    >
-                      <SelectTrigger className="w-full mt-1" id="target-language">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sourceLanguages.map((lang) => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+          <nav className="space-y-1 flex-grow">
+            <Button 
+              variant={activeTab === 'new-meeting' ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('new-meeting')}
+            >
+              New Meeting
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'active-meeting' ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveTab('active-meeting')}
+              disabled={!meetingLink}
+            >
+              Active Meeting
+            </Button>
+            
+            <Button 
+              variant={activeTab === 'history' ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => navigate('/history')}
+            >
+              History
+            </Button>
+          </nav>
+
+          <div className="mt-auto pt-4 border-t border-gray-200">
+            <div className="flex flex-col space-y-2">
+              <div className="text-sm text-gray-500">
+                Balance: <span className="font-medium">0 min</span>
               </div>
               
-              <GoogleMeetBot 
-                sourceLanguage={sourceLanguage}
-                targetLanguage={targetLanguage}
-                onBotJoined={handleBotJoined}
-              />
+              <Button className="w-full bg-teal hover:bg-teal/90">
+                Start Trial
+              </Button>
             </div>
-          ) : (
-            <div className="bg-white p-8 rounded-xl shadow-md text-center">
-              <h3 className="text-xl font-semibold mb-4 text-green-600">Bot is active in your meeting!</h3>
-              <p className="mb-6">
-                The translation bot has joined your Google Meet and is translating from {sourceLanguage} to {targetLanguage}.
-              </p>
-              
-              {meetingId && (
-                <Button
-                  onClick={() => navigate(`/meeting/${meetingId}`)}
-                  className="bg-teal hover:bg-teal/90 text-white"
-                >
-                  View Translation Dashboard
-                </Button>
-              )}
-            </div>
-          )}
+          </div>
+        </div>
+
+        {/* Main content area */}
+        <div className="flex-grow p-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsContent value="new-meeting" className="mt-0">
+              <div className="max-w-3xl mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-center mb-2">Add MeetingLingo to your meeting</h1>
+                  <p className="text-gray-600 text-center">Enter your meeting link and MeetingLingo will join the call</p>
+                </div>
+                
+                <Card className="shadow-md">
+                  <CardContent className="pt-6">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Meeting Link
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Link2 className="h-4 w-4 text-gray-400" />
+                          </div>
+                          <Input
+                            value={meetingLink}
+                            onChange={(e) => setMeetingLink(e.target.value)}
+                            placeholder="https://meet.google.com/abc-defg-hij"
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Source Language
+                          </label>
+                          <Select 
+                            value={sourceLanguage} 
+                            onValueChange={setSourceLanguage}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sourceLanguages.map((lang) => (
+                                <SelectItem key={lang.value} value={lang.value}>
+                                  {lang.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Target Language
+                          </label>
+                          <Select 
+                            value={targetLanguage} 
+                            onValueChange={setTargetLanguage}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sourceLanguages.map((lang) => (
+                                <SelectItem key={lang.value} value={lang.value}>
+                                  {lang.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="flex justify-center pb-6">
+                    <Button 
+                      onClick={handleJoinMeeting}
+                      className="w-full md:w-auto bg-teal hover:bg-teal/90"
+                      disabled={isLoading || !meetingLink}
+                    >
+                      {isLoading ? 'Processing...' : 'Join Meeting'}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="active-meeting">
+              <div className="max-w-3xl mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-center mb-2">MeetingLingo Bot</h1>
+                  <p className="text-gray-600 text-center">
+                    {botJoined 
+                      ? "The bot has joined your meeting and is translating" 
+                      : "Complete the authorization to join your meeting"}
+                  </p>
+                </div>
+                
+                <GoogleMeetBot 
+                  sourceLanguage={sourceLanguage}
+                  targetLanguage={targetLanguage}
+                  onBotJoined={handleBotJoined}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-      <Footer />
+
+      {/* Microphone permission dialog */}
+      {showMicPermissionDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mic className="h-10 w-10 text-teal" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">To use MeetingLingo, enable microphone access</h2>
+              <p className="text-gray-600">Please allow microphone access in your browser settings.</p>
+            </div>
+            
+            <div className="flex justify-center">
+              <Button 
+                onClick={requestMicrophonePermission}
+                className="bg-teal hover:bg-teal/90 w-full"
+              >
+                Allow Microphone Access
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
