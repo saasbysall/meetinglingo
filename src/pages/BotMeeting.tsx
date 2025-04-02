@@ -11,6 +11,8 @@ import { Link2, Mic, Languages } from 'lucide-react';
 import GoogleMeetBot from '@/components/meeting/GoogleMeetBot';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 
 const sourceLanguages = [
   { value: 'en-GB', label: 'English (UK)' },
@@ -23,7 +25,6 @@ const sourceLanguages = [
   { value: 'ja-JP', label: 'Japanese' },
   { value: 'zh-CN', label: 'Chinese (Simplified)' },
   { value: 'ru-RU', label: 'Russian' },
-  // More languages can be added here
 ];
 
 export default function BotMeeting() {
@@ -154,166 +155,123 @@ export default function BotMeeting() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Simple sidebar-like layout */}
-      <div className="flex flex-grow">
-        {/* Left sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-darkblue flex items-center">
-              <span className="mr-2">Meeting</span><span className="text-teal">Lingo</span>
-            </h1>
-          </div>
+      <Navbar />
+      {/* Main content area */}
+      <div className="flex-grow pt-20 p-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="new-meeting">New Meeting</TabsTrigger>
+            <TabsTrigger value="active-meeting" disabled={!meetingLink}>Active Meeting</TabsTrigger>
+          </TabsList>
           
-          <nav className="space-y-1 flex-grow">
-            <Button 
-              variant={activeTab === 'new-meeting' ? "default" : "ghost"} 
-              className="w-full justify-start"
-              onClick={() => setActiveTab('new-meeting')}
-            >
-              New Meeting
-            </Button>
-            
-            <Button 
-              variant={activeTab === 'active-meeting' ? "default" : "ghost"} 
-              className="w-full justify-start"
-              onClick={() => setActiveTab('active-meeting')}
-              disabled={!meetingLink}
-            >
-              Active Meeting
-            </Button>
-            
-            <Button 
-              variant={activeTab === 'history' ? "default" : "ghost"} 
-              className="w-full justify-start"
-              onClick={() => navigate('/history')}
-            >
-              History
-            </Button>
-          </nav>
-
-          <div className="mt-auto pt-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-2">
-              <div className="text-sm text-gray-500">
-                Balance: <span className="font-medium">0 min</span>
+          <TabsContent value="new-meeting" className="mt-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-center mb-2">Add MeetingLingo to your meeting</h1>
+                <p className="text-gray-600 text-center">Enter your meeting link and MeetingLingo will join the call</p>
               </div>
               
-              <Button className="w-full bg-teal hover:bg-teal/90">
-                Start Trial
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content area */}
-        <div className="flex-grow p-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsContent value="new-meeting" className="mt-0">
-              <div className="max-w-3xl mx-auto">
-                <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-center mb-2">Add MeetingLingo to your meeting</h1>
-                  <p className="text-gray-600 text-center">Enter your meeting link and MeetingLingo will join the call</p>
-                </div>
-                
-                <Card className="shadow-md">
-                  <CardContent className="pt-6">
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Meeting Link
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Link2 className="h-4 w-4 text-gray-400" />
-                          </div>
-                          <Input
-                            value={meetingLink}
-                            onChange={(e) => setMeetingLink(e.target.value)}
-                            placeholder="https://meet.google.com/abc-defg-hij"
-                            className="pl-10"
-                          />
+              <Card className="shadow-md">
+                <CardContent className="pt-6">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Link
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Link2 className="h-4 w-4 text-gray-400" />
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Source Language
-                          </label>
-                          <Select 
-                            value={sourceLanguage} 
-                            onValueChange={setSourceLanguage}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select language" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sourceLanguages.map((lang) => (
-                                <SelectItem key={lang.value} value={lang.value}>
-                                  {lang.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Target Language
-                          </label>
-                          <Select 
-                            value={targetLanguage} 
-                            onValueChange={setTargetLanguage}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select language" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sourceLanguages.map((lang) => (
-                                <SelectItem key={lang.value} value={lang.value}>
-                                  {lang.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <Input
+                          value={meetingLink}
+                          onChange={(e) => setMeetingLink(e.target.value)}
+                          placeholder="https://meet.google.com/abc-defg-hij"
+                          className="pl-10"
+                        />
                       </div>
                     </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-center pb-6">
-                    <Button 
-                      onClick={handleJoinMeeting}
-                      className="w-full md:w-auto bg-teal hover:bg-teal/90"
-                      disabled={isLoading || !meetingLink}
-                    >
-                      {isLoading ? 'Processing...' : 'Join Meeting'}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="active-meeting">
-              <div className="max-w-3xl mx-auto">
-                <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-center mb-2">MeetingLingo Bot</h1>
-                  <p className="text-gray-600 text-center">
-                    {botJoined 
-                      ? "The bot has joined your meeting and is translating" 
-                      : "Complete the authorization to join your meeting"}
-                  </p>
-                </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Source Language
+                        </label>
+                        <Select 
+                          value={sourceLanguage} 
+                          onValueChange={setSourceLanguage}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sourceLanguages.map((lang) => (
+                              <SelectItem key={lang.value} value={lang.value}>
+                                {lang.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Target Language
+                        </label>
+                        <Select 
+                          value={targetLanguage} 
+                          onValueChange={setTargetLanguage}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sourceLanguages.map((lang) => (
+                              <SelectItem key={lang.value} value={lang.value}>
+                                {lang.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
                 
-                <GoogleMeetBot 
-                  sourceLanguage={sourceLanguage}
-                  targetLanguage={targetLanguage}
-                  onBotJoined={handleBotJoined}
-                />
+                <CardFooter className="flex justify-center pb-6">
+                  <Button 
+                    onClick={handleJoinMeeting}
+                    className="w-full md:w-auto bg-teal hover:bg-teal/90"
+                    disabled={isLoading || !meetingLink}
+                  >
+                    {isLoading ? 'Processing...' : 'Join Meeting'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="active-meeting">
+            <div className="max-w-3xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-center mb-2">MeetingLingo Bot</h1>
+                <p className="text-gray-600 text-center">
+                  {botJoined 
+                    ? "The bot has joined your meeting and is translating" 
+                    : "Complete the authorization to join your meeting"}
+                </p>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              
+              <GoogleMeetBot 
+                sourceLanguage={sourceLanguage}
+                targetLanguage={targetLanguage}
+                onBotJoined={handleBotJoined}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
+      
+      <Footer />
 
       {/* Microphone permission dialog */}
       {showMicPermissionDialog && (

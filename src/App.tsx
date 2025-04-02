@@ -8,10 +8,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import NewMeeting from "./pages/NewMeeting";
-import Meeting from "./pages/Meeting";
-import History from "./pages/History";
 import BotMeeting from "./pages/BotMeeting";
 import AccountInfo from "./pages/AccountInfo";
 import Permissions from "./pages/Permissions";
@@ -44,7 +40,7 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (user) {
-    return <Navigate to="/meeting/bot" replace />;
+    return <Navigate to="/app" replace />;
   }
   
   return <>{children}</>;
@@ -59,11 +55,12 @@ function AppRoutes() {
       <Route path="/auth/callback" element={<GoogleAuthCallback />} />
       <Route path="/account-info" element={<ProtectedRoute><AccountInfo /></ProtectedRoute>} />
       <Route path="/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/meeting/new" element={<ProtectedRoute><NewMeeting /></ProtectedRoute>} />
-      <Route path="/meeting/bot" element={<ProtectedRoute><BotMeeting /></ProtectedRoute>} />
-      <Route path="/meeting/:meetingId" element={<ProtectedRoute><Meeting /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+      <Route path="/app" element={<ProtectedRoute><BotMeeting /></ProtectedRoute>} />
+      
+      {/* Redirect from /meeting/new to /app */}
+      <Route path="/meeting/new" element={<Navigate to="/app" replace />} />
+      <Route path="/meeting/bot" element={<Navigate to="/app" replace />} />
+      
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

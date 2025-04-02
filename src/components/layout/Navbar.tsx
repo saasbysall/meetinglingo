@@ -16,9 +16,8 @@ const Navbar = () => {
 
   // Check if user is on authenticated pages
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
-  const isDashboardPage = location.pathname.includes('/dashboard') || 
-                          location.pathname.includes('/meeting') ||
-                          location.pathname.includes('/history');
+  const isAppPath = location.pathname.includes('/app') || 
+                    location.pathname.includes('/permissions');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,7 +63,7 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
-          {!isDashboardPage && (
+          {!isAppPath && (
             <div className="flex items-center space-x-6">
               <Link to="/features" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
                 Features
@@ -80,15 +79,10 @@ const Navbar = () => {
           
           {user ? (
             <div className="flex items-center space-x-4">
-              <Link to="/meeting/new">
+              <Link to="/app">
                 <Button className="bg-teal text-white hover:bg-teal/90 flex items-center space-x-2">
                   <Video size={16} />
-                  <span>New Meeting</span>
-                </Button>
-              </Link>
-              <Link to="/dashboard">
-                <Button variant="outline" className="border-gray-200 hover:bg-gray-50">
-                  Dashboard
+                  <span>App</span>
                 </Button>
               </Link>
               <Button 
@@ -130,7 +124,7 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 top-[60px] bg-white z-40 animate-fade-in">
           <div className="container mx-auto px-4 py-8 flex flex-col space-y-6">
-            {!isDashboardPage && (
+            {!isAppPath && (
               <>
                 <Link 
                   to="/features" 
@@ -160,20 +154,12 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link 
-                    to="/meeting/new" 
+                    to="/app" 
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Button className="w-full bg-teal text-white hover:bg-teal/90 flex items-center justify-center space-x-2">
                       <Video size={16} />
-                      <span>New Meeting</span>
-                    </Button>
-                  </Link>
-                  <Link 
-                    to="/dashboard" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button variant="outline" className="w-full border-gray-200 hover:bg-gray-50">
-                      Dashboard
+                      <span>App</span>
                     </Button>
                   </Link>
                   <Button 
