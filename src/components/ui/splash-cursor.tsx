@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useRef } from "react";
 
@@ -13,53 +14,6 @@ interface PointerObject {
   down: boolean;
   moved: boolean;
   color: {r: number, g: number, b: number};
-}
-
-interface WebGLContext {
-  gl: WebGLRenderingContext;
-  ext: {
-    formatRGBA: {internalFormat: number, format: number} | null;
-    formatRG: {internalFormat: number, format: number} | null;
-    formatR: {internalFormat: number, format: number} | null;
-    halfFloatTexType: number;
-    supportLinearFiltering: boolean;
-  };
-}
-
-interface FBO {
-  texture: WebGLTexture;
-  fbo: WebGLFramebuffer;
-  width: number;
-  height: number;
-  texelSizeX: number;
-  texelSizeY: number;
-  attach: (id: number) => number;
-}
-
-interface DoubleFBO {
-  width: number;
-  height: number;
-  texelSizeX: number;
-  texelSizeY: number;
-  read: FBO;
-  write: FBO;
-  swap: () => void;
-}
-
-interface MaterialClass {
-  vertexShader: WebGLShader;
-  fragmentShaderSource: string;
-  programs: Record<number, WebGLProgram>;
-  activeProgram: WebGLProgram | null;
-  uniforms: Record<string, WebGLUniformLocation>;
-  setKeywords: (keywords: string[]) => void;
-  bind: () => void;
-}
-
-interface ProgramClass {
-  uniforms: Record<string, WebGLUniformLocation>;
-  program: WebGLProgram;
-  bind: () => void;
 }
 
 function SplashCursor({
@@ -120,13 +74,6 @@ function SplashCursor({
     // Use PointerObject[]
     const pointers: PointerObject[] = [new (pointerPrototype as any)()];
 
-    // Properly typed WebGL context
-    const { gl, ext } = getWebGLContext(canvas) as WebGLContext;
-    if (!ext.supportLinearFiltering) {
-      config.DYE_RESOLUTION = 256;
-      config.SHADING = false;
-    }
-
     function getWebGLContext(canvas: HTMLCanvasElement) {
       const params = {
         alpha: true,
@@ -137,7 +84,7 @@ function SplashCursor({
       };
       
       // Try to get WebGL2 context
-      let gl2 = canvas.getContext("webgl2", params) as WebGL2RenderingContext | null;
+      let gl2 = canvas.getContext("webgl2", params);
       const isWebGL2 = !!gl2;
       
       // Fall back to WebGL1 if WebGL2 is not available
@@ -211,10 +158,10 @@ function SplashCursor({
     function getSupportedFormat(gl: WebGLRenderingContext, internalFormat: number, format: number, type: number) {
       if (!supportRenderTextureFormat(gl, internalFormat, format, type)) {
         switch (internalFormat) {
-          case (gl as WebGL2RenderingContext).R16F:
-            return getSupportedFormat(gl, (gl as WebGL2RenderingContext).RG16F, (gl as WebGL2RenderingContext).RG, type);
-          case (gl as WebGL2RenderingContext).RG16F:
-            return getSupportedFormat(gl, (gl as WebGL2RenderingContext).RGBA16F, gl.RGBA, type);
+          case (gl as any).R16F:
+            return getSupportedFormat(gl, (gl as any).RG16F, (gl as any).RG, type);
+          case (gl as any).RG16F:
+            return getSupportedFormat(gl, (gl as any).RGBA16F, gl.RGBA, type);
           default:
             return null;
         }
@@ -256,8 +203,18 @@ function SplashCursor({
       return status === gl.FRAMEBUFFER_COMPLETE;
     }
 
-    // Properly typed Material class
-    class Material implements MaterialClass {
+    // Properly typed context
+    const glContext = getWebGLContext(canvas);
+    const gl = glContext.gl;
+    const ext = glContext.ext;
+    
+    if (!ext.supportLinearFiltering) {
+      config.DYE_RESOLUTION = 256;
+      config.SHADING = false;
+    }
+
+    // Material class
+    class Material {
       vertexShader: WebGLShader;
       fragmentShaderSource: string;
       programs: Record<number, WebGLProgram> = {};
@@ -292,8 +249,8 @@ function SplashCursor({
       }
     }
 
-    // Properly typed Program class
-    class Program implements ProgramClass {
+    // Program class
+    class Program {
       uniforms: Record<string, WebGLUniformLocation> = {};
       program: WebGLProgram;
 
@@ -641,6 +598,28 @@ function SplashCursor({
       `
     );
 
+    // Define FBO interface
+    interface FBO {
+      texture: WebGLTexture;
+      fbo: WebGLFramebuffer;
+      width: number;
+      height: number;
+      texelSizeX: number;
+      texelSizeY: number;
+      attach: (id: number) => number;
+    }
+
+    // Define DoubleFBO interface
+    interface DoubleFBO {
+      width: number;
+      height: number;
+      texelSizeX: number;
+      texelSizeY: number;
+      read: FBO;
+      write: FBO;
+      swap: () => void;
+    }
+
     const blit = (() => {
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()!);
       gl.bufferData(
@@ -673,7 +652,11 @@ function SplashCursor({
       };
     })();
 
-    let dye: DoubleFBO, velocity: DoubleFBO, divergence: FBO, curl: FBO, pressure: DoubleFBO;
+    let dye: DoubleFBO;
+    let velocity: DoubleFBO;
+    let divergence: FBO;
+    let curl: FBO;
+    let pressure: DoubleFBO;
 
     const copyProgram = new Program(baseVertexShader, copyShader);
     const clearProgram = new Program(baseVertexShader, clearShader);
@@ -688,6 +671,112 @@ function SplashCursor({
       gradientSubtractShader
     );
     const displayMaterial = new Material(baseVertexShader, displayShaderSource);
+
+    function createFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number): FBO {
+      gl.activeTexture(gl.TEXTURE0);
+      let texture = gl.createTexture()!;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        internalFormat,
+        w,
+        h,
+        0,
+        format,
+        type,
+        null
+      );
+
+      let fbo = gl.createFramebuffer()!;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texture,
+        0
+      );
+      gl.viewport(0, 0, w, h);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      const texelSizeX = 1.0 / w;
+      const texelSizeY = 1.0 / h;
+      
+      return {
+        texture,
+        fbo,
+        width: w,
+        height: h,
+        texelSizeX,
+        texelSizeY,
+        attach(id: number) {
+          gl.activeTexture(gl.TEXTURE0 + id);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          return id;
+        },
+      };
+    }
+
+    function createDoubleFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number): DoubleFBO {
+      let fbo1 = createFBO(w, h, internalFormat, format, type, param);
+      let fbo2 = createFBO(w, h, internalFormat, format, type, param);
+      
+      return {
+        width: w,
+        height: h,
+        texelSizeX: fbo1.texelSizeX,
+        texelSizeY: fbo1.texelSizeY,
+        read: fbo1,
+        write: fbo2,
+        swap() {
+          const temp = this.read;
+          this.read = this.write;
+          this.write = temp;
+        },
+      };
+    }
+
+    function resizeFBO(target: FBO, w: number, h: number, internalFormat: number, format: number, type: number, param: number): FBO {
+      const newFBO = createFBO(w, h, internalFormat, format, type, param);
+      copyProgram.bind();
+      gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
+      blit(newFBO);
+      return newFBO;
+    }
+
+    function resizeDoubleFBO(
+      target: DoubleFBO,
+      w: number,
+      h: number,
+      internalFormat: number,
+      format: number,
+      type: number,
+      param: number
+    ): DoubleFBO {
+      if (target.width === w && target.height === h) return target;
+      
+      target.read = resizeFBO(
+        target.read,
+        w,
+        h,
+        internalFormat,
+        format,
+        type,
+        param
+      );
+      target.write = createFBO(w, h, internalFormat, format, type, param);
+      target.width = w;
+      target.height = h;
+      target.texelSizeX = 1.0 / w;
+      target.texelSizeY = 1.0 / h;
+      
+      return target;
+    }
 
     function initFramebuffers() {
       let simRes = getResolution(config.SIM_RESOLUTION);
@@ -765,111 +854,36 @@ function SplashCursor({
       );
     }
 
-    function createFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number): FBO {
-      gl.activeTexture(gl.TEXTURE0);
-      let texture = gl.createTexture()!;
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        internalFormat,
-        w,
-        h,
-        0,
-        format,
-        type,
-        null
-      );
-
-      let fbo = gl.createFramebuffer()!;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        texture,
-        0
-      );
-      gl.viewport(0, 0, w, h);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      const texelSizeX = 1.0 / w;
-      const texelSizeY = 1.0 / h;
-      
-      return {
-        texture,
-        fbo,
-        width: w,
-        height: h,
-        texelSizeX,
-        texelSizeY,
-        attach(id: number) {
-          gl.activeTexture(gl.TEXTURE0 + id);
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          return id;
-        },
-      };
-    }
-
-    function createDoubleFBO(w: number, h: number, internalFormat: number, format: number, type: number, param: number): DoubleFBO {
-      let fbo1 = createFBO(w, h, internalFormat, format, type, param);
-      let fbo2 = createFBO(w, h, internalFormat, format, type, param);
-      
-      return {
-        width: w,
-        height: h,
-        texelSizeX: fbo1.texelSizeX,
-        texelSizeY: fbo1.texelSizeY,
-        read: fbo1,
-        write: fbo2,
-        swap() {
-          const temp = fbo1;
-          fbo1 = fbo2;
-          fbo2 = temp;
-        },
-      };
-    }
-
-    function resizeFBO(target: FBO, w: number, h: number, internalFormat: number, format: number, type: number, param: number): FBO {
-      const newFBO = createFBO(w, h, internalFormat, format, type, param);
-      copyProgram.bind();
-      gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
-      blit(newFBO);
-      return newFBO;
-    }
-
-    function resizeDoubleFBO(
-      target: DoubleFBO,
-      w: number,
-      h: number,
-      internalFormat: number,
-      format: number,
-      type: number,
-      param: number
-    ): DoubleFBO {
-      if (target.width === w && target.height === h) return target;
-      
-      const newTarget: DoubleFBO = {
-        ...target,
-        width: w,
-        height: h,
-        texelSizeX: 1.0 / w,
-        texelSizeY: 1.0 / h,
-        read: resizeFBO(target.read, w, h, internalFormat, format, type, param),
-        write: createFBO(w, h, internalFormat, format, type, param)
-      };
-      
-      return newTarget;
-    }
-
     function updateKeywords() {
       let displayKeywords: string[] = [];
       if (config.SHADING) displayKeywords.push("SHADING");
       displayMaterial.setKeywords(displayKeywords);
+    }
+
+    function getResolution(resolution: number) {
+      let aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
+      if (aspectRatio < 1) aspectRatio = 1.0 / aspectRatio;
+      const min = Math.round(resolution);
+      const max = Math.round(resolution * aspectRatio);
+      if (gl.drawingBufferWidth > gl.drawingBufferHeight)
+        return { width: max, height: min };
+      else return { width: min, height: max };
+    }
+
+    function scaleByPixelRatio(input: number) {
+      const pixelRatio = window.devicePixelRatio || 1;
+      return Math.floor(input * pixelRatio);
+    }
+
+    function resizeCanvas() {
+      let width = scaleByPixelRatio(canvas.clientWidth);
+      let height = scaleByPixelRatio(canvas.clientHeight);
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        return true;
+      }
+      return false;
     }
 
     updateKeywords();
@@ -893,17 +907,6 @@ function SplashCursor({
       dt = Math.min(dt, 0.016666);
       lastUpdateTime = now;
       return dt;
-    }
-
-    function resizeCanvas() {
-      let width = scaleByPixelRatio(canvas.clientWidth);
-      let height = scaleByPixelRatio(canvas.clientHeight);
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        return true;
-      }
-      return false;
     }
 
     function updateColors(dt: number) {
@@ -1213,21 +1216,6 @@ function SplashCursor({
       const range = max - min;
       if (range === 0) return min;
       return ((value - min) % range) + min;
-    }
-
-    function getResolution(resolution: number) {
-      let aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
-      if (aspectRatio < 1) aspectRatio = 1.0 / aspectRatio;
-      const min = Math.round(resolution);
-      const max = Math.round(resolution * aspectRatio);
-      if (gl.drawingBufferWidth > gl.drawingBufferHeight)
-        return { width: max, height: min };
-      else return { width: min, height: max };
-    }
-
-    function scaleByPixelRatio(input: number) {
-      const pixelRatio = window.devicePixelRatio || 1;
-      return Math.floor(input * pixelRatio);
     }
 
     function hashCode(s: string) {
