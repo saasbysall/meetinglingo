@@ -13,6 +13,7 @@ import AccountInfo from "./pages/AccountInfo";
 import Permissions from "./pages/Permissions";
 import GoogleAuthCallback from "./components/auth/GoogleAuthCallback";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SplashCursor } from "./components/ui/splash-cursor";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,15 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <SplashCursor 
+            COLOR_UPDATE_SPEED={5}
+            DENSITY_DISSIPATION={2.5}
+            VELOCITY_DISSIPATION={1.5}
+            SPLAT_RADIUS={0.3}
+            SPLAT_FORCE={8000}
+            CURL={25}
+            TRANSPARENT={true}
+          />
           <Toaster />
           <Sonner />
           <BrowserRouter>
