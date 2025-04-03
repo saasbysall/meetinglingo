@@ -1,4 +1,3 @@
-
 "use client";
 import { useEffect, useRef } from "react";
 
@@ -136,18 +135,27 @@ function SplashCursor({
         antialias: false,
         preserveDrawingBuffer: false,
       };
-      let gl = canvas.getContext("webgl2", params) as WebGL2RenderingContext | null;
-      const isWebGL2 = !!gl;
-      if (!isWebGL2)
-        gl =
-          (canvas.getContext("webgl", params) ||
-          canvas.getContext("experimental-webgl", params)) as WebGLRenderingContext;
+      
+      // Try to get WebGL2 context
+      let gl2 = canvas.getContext("webgl2", params) as WebGL2RenderingContext | null;
+      const isWebGL2 = !!gl2;
+      
+      // Fall back to WebGL1 if WebGL2 is not available
+      let gl: WebGLRenderingContext;
+      if (isWebGL2) {
+        gl = gl2 as WebGLRenderingContext;
+      } else {
+        const ctx = canvas.getContext("webgl", params) || 
+                    canvas.getContext("experimental-webgl", params);
+        if (!ctx) throw new Error('WebGL not supported');
+        gl = ctx as WebGLRenderingContext;
+      }
       
       let halfFloat;
       let supportLinearFiltering;
       if (isWebGL2) {
-        gl.getExtension("EXT_color_buffer_float");
-        supportLinearFiltering = gl.getExtension("OES_texture_float_linear");
+        gl2!.getExtension("EXT_color_buffer_float");
+        supportLinearFiltering = gl2!.getExtension("OES_texture_float_linear");
       } else {
         halfFloat = gl.getExtension("OES_texture_half_float");
         supportLinearFiltering = gl.getExtension(
@@ -156,8 +164,8 @@ function SplashCursor({
       }
       gl.clearColor(0.0, 0.0, 0.0, 1.0);
       const halfFloatTexType = isWebGL2
-        ? (gl as WebGL2RenderingContext).HALF_FLOAT
-        : halfFloat && (halfFloat as any).HALF_FLOAT_OES;
+        ? (gl2 as WebGL2RenderingContext).HALF_FLOAT
+        : halfFloat ? (halfFloat as any).HALF_FLOAT_OES : gl.UNSIGNED_BYTE;
       
       let formatRGBA;
       let formatRG;
@@ -166,20 +174,20 @@ function SplashCursor({
       if (isWebGL2) {
         formatRGBA = getSupportedFormat(
           gl,
-          (gl as WebGL2RenderingContext).RGBA16F,
+          (gl2 as WebGL2RenderingContext).RGBA16F,
           gl.RGBA,
           halfFloatTexType
         );
         formatRG = getSupportedFormat(
           gl, 
-          (gl as WebGL2RenderingContext).RG16F, 
-          (gl as WebGL2RenderingContext).RG, 
+          (gl2 as WebGL2RenderingContext).RG16F, 
+          (gl2 as WebGL2RenderingContext).RG, 
           halfFloatTexType
         );
         formatR = getSupportedFormat(
           gl,
-          (gl as WebGL2RenderingContext).R16F,
-          (gl as WebGL2RenderingContext).RED,
+          (gl2 as WebGL2RenderingContext).R16F,
+          (gl2 as WebGL2RenderingContext).RED,
           halfFloatTexType
         );
       } else {
