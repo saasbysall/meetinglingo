@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 export interface PricingPlan {
     name: string;
+    description?: string; // Make description optional
     monthlyPrice: number;
     yearlyPrice: number;
     features: string[];
@@ -18,6 +19,7 @@ interface PricingProps {
     title?: string;
     plans: PricingPlan[];
     className?: string;
+    onGetStarted?: (planName: string) => void;
 }
 
 // Counter Component
@@ -125,11 +127,13 @@ const BackgroundEffects = () => (
 const PricingCard = ({
     plan,
     isYearly,
-    index
+    index,
+    onGetStarted
 }: {
     plan: PricingPlan;
     isYearly: boolean;
-    index: number
+    index: number;
+    onGetStarted?: (planName: string) => void;
 }) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const mouseX = useMotionValue(0);
@@ -140,6 +144,12 @@ const PricingCard = ({
 
     const currentPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     const previousPrice = !isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+
+    const handleClick = () => {
+        if (onGetStarted) {
+            onGetStarted(plan.name);
+        }
+    };
 
     return (
         <motion.div
@@ -199,6 +209,9 @@ const PricingCard = ({
             {/* Plan Name and Popular Badge */}
             <div className="mb-4">
                 <h3 className="text-xl font-black text-black mb-2">{plan.name}</h3>
+                {plan.description && (
+                    <p className="text-sm text-gray-600 mb-2">{plan.description}</p>
+                )}
                 {plan.isPopular && (
                     <motion.span
                         className={cn(
@@ -253,6 +266,7 @@ const PricingCard = ({
 
             {/* CTA Button */}
             <motion.button
+                onClick={handleClick}
                 className={cn(
                     `w-full py-2 rounded-lg text-white font-black text-sm
                     border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)]
@@ -276,7 +290,7 @@ const PricingCard = ({
 };
 
 // Main Container Component
-export const PricingContainer = ({ title = "Pricing Plans", plans, className = "" }: PricingProps) => {
+export const PricingContainer = ({ title = "Pricing Plans", plans, className = "", onGetStarted }: PricingProps) => {
     const [isYearly, setIsYearly] = useState(false);
 
     return (
@@ -292,6 +306,7 @@ export const PricingContainer = ({ title = "Pricing Plans", plans, className = "
                         plan={plan}
                         isYearly={isYearly}
                         index={index}
+                        onGetStarted={onGetStarted}
                     />
                 ))}
             </div>

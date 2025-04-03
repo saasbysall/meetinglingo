@@ -94,6 +94,7 @@ export default function Pricing() {
           <PricingContainer
             title="Choose Your Perfect Plan"
             plans={MEETING_LINGO_PLANS}
+            onGetStarted={handleGetStarted}
           />
         </div>
       </main>
