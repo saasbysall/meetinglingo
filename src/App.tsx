@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import BotMeeting from "./pages/BotMeeting";
 import AccountInfo from "./pages/AccountInfo";
 import Permissions from "./pages/Permissions";
+import Pricing from "./pages/Pricing";
 import GoogleAuthCallback from "./components/auth/GoogleAuthCallback";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SplashCursor } from "./components/ui/splash-cursor";
@@ -53,6 +54,7 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
       <Route path="/signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="/auth/callback" element={<GoogleAuthCallback />} />
       <Route path="/account-info" element={<ProtectedRoute><AccountInfo /></ProtectedRoute>} />
       <Route path="/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
