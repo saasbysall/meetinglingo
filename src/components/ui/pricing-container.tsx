@@ -3,16 +3,21 @@
 import React, { useRef, useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion'
 import { cn } from '@/lib/utils';
+import { Slider } from '@/components/ui/slider'
+import { Progress } from '@/components/ui/progress'
 
 export interface PricingPlan {
     name: string;
-    description?: string; // Make description optional
+    description?: string;
     monthlyPrice: number;
     yearlyPrice: number;
     features: string[];
     isPopular?: boolean;
     accent: string;
     rotation?: number;
+    freeMinutes?: number;
+    includedMinutes?: number;
+    extraMinutesRate?: number;
 }
 
 interface PricingProps {
@@ -41,14 +46,14 @@ const Counter = ({ from, to }: { from: number; to: number }) => {
 
 // Header Component
 const PricingHeader = ({ title }: { title: string }) => (
-    <div className="text-center mb-8 sm:mb-12 relative z-10">
+    <div className="text-center mb-4 sm:mb-6 relative z-10">
         <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-block"
         >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-800 
-                bg-gradient-to-r from-white to-gray-100 px-8 py-4 rounded-xl border-4 border-black
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 
+                bg-gradient-to-r from-white to-gray-100 px-6 py-3 rounded-xl border-4 border-black
                 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.9),_15px_15px_15px_-3px_rgba(0,0,0,0.1)]
                 transform transition-transform hover:translate-x-1 hover:translate-y-1 mb-3 relative
                 before:absolute before:inset-0 before:bg-white/50 before:rounded-xl before:blur-sm before:-z-10">
@@ -67,7 +72,7 @@ const PricingHeader = ({ title }: { title: string }) => (
 // Toggle Component
 const PricingToggle = ({ isYearly, onToggle }: { isYearly: boolean; onToggle: () => void }) => (
     <div className="flex justify-center items-center gap-4 mb-8 relative z-10">
-        <span className={`text-gray-600 font-medium ${!isYearly ? 'text-black' : ''}`}>Monthly</span>
+        <span className={`text-gray-600 font-medium ${!isYearly ? 'text-black' : ''}`}>Pay Monthly</span>
         <motion.button
             className="w-16 h-8 flex items-center bg-gray-200 rounded-full p-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]"
             onClick={onToggle}
@@ -77,12 +82,12 @@ const PricingToggle = ({ isYearly, onToggle }: { isYearly: boolean; onToggle: ()
                 animate={{ x: isYearly ? 32 : 0 }}
             />
         </motion.button>
-        <span className={`text-gray-600 font-medium ${isYearly ? 'text-black' : ''}`}>Yearly</span>
+        <span className={`text-gray-600 font-medium ${isYearly ? 'text-black' : ''}`}>Pay Yearly</span>
         {isYearly && (
             <motion.span
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-green-500 font-medium text-sm"
+                className="text-blue-500 font-medium text-sm"
             >
                 Save 20%
             </motion.span>
@@ -123,6 +128,64 @@ const BackgroundEffects = () => (
     </>
 );
 
+// Minutes Slider Component
+const MinutesSlider = ({ 
+    value, 
+    onChange, 
+    min = 150, 
+    max = 2500 
+}: { 
+    value: number; 
+    onChange: (value: number) => void; 
+    min?: number; 
+    max?: number; 
+}) => {
+    const steps = [
+        { value: 150, label: '150 mins' },
+        { value: 400, label: '400 mins' },
+        { value: 2500, label: '2500 mins' },
+    ];
+
+    const getClosestStep = (val: number) => {
+        return steps.reduce((prev, curr) => {
+            return Math.abs(curr.value - val) < Math.abs(prev.value - val) ? curr : prev;
+        });
+    };
+
+    const handleChange = (newValue: number[]) => {
+        const step = getClosestStep(newValue[0]);
+        onChange(step.value);
+    };
+
+    const progress = ((value - min) / (max - min)) * 100;
+
+    return (
+        <div className="w-full mt-4">
+            <Progress value={progress} className="h-2 mb-2" />
+            
+            <Slider
+                value={[value]}
+                min={min}
+                max={max}
+                step={1}
+                onValueChange={handleChange}
+                className="w-full"
+            />
+            
+            <div className="flex justify-between mt-2 text-sm text-gray-600">
+                {steps.map((step) => (
+                    <span 
+                        key={step.value}
+                        className={value === step.value ? "font-bold text-black" : ""}
+                    >
+                        {step.label}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // Pricing Card Component
 const PricingCard = ({
     plan,
@@ -144,12 +207,16 @@ const PricingCard = ({
 
     const currentPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     const previousPrice = !isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+    
+    const [selectedMinutes, setSelectedMinutes] = useState(plan.includedMinutes || 400);
 
     const handleClick = () => {
         if (onGetStarted) {
             onGetStarted(plan.name);
         }
     };
+
+    const isEnterprise = plan.name === "Enterprise";
 
     return (
         <motion.div
@@ -180,61 +247,91 @@ const PricingCard = ({
                 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.9)]
                 transition-all duration-200`}
         >
-            {/* Price Badge */}
-            <motion.div
-                className={cn(
-                    `absolute -top-4 -right-4 w-16 h-16 
-                    rounded-full flex items-center justify-center border-2 border-black
-                    shadow-[3px_3px_0px_0px_rgba(0,0,0,0.9)]`
-                    , plan.accent)}
-                animate={{
-                    rotate: [0, 10, 0, -10, 0],
-                    scale: [1, 1.1, 0.9, 1.1, 1],
-                    y: [0, -5, 5, -3, 0]
-                }}
-                transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: [0.76, 0, 0.24, 1]
-                }}
-            >
-                <div className="text-center text-white">
-                    <div className="text-lg font-black">$
-                        <Counter from={previousPrice} to={currentPrice} />
-                    </div>
-                    <div className="text-[10px] font-bold">/{isYearly ? 'yr' : 'mo'}</div>
-                </div>
-            </motion.div>
-
-            {/* Plan Name and Popular Badge */}
-            <div className="mb-4">
-                <h3 className="text-xl font-black text-black mb-2">{plan.name}</h3>
+            {/* Plan Name and Description */}
+            <div className="mb-3">
+                <h3 className="text-xl font-black text-black mb-1">{plan.name}</h3>
                 {plan.description && (
                     <p className="text-sm text-gray-600 mb-2">{plan.description}</p>
                 )}
-                {plan.isPopular && (
-                    <motion.span
-                        className={cn(
-                            `inline-block px-3 py-1 text-white
-                            font-bold rounded-md text-xs border-2 border-black
-                            shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]`
-                            , plan.accent)}
-                        animate={{
-                            y: [0, -3, 0],
-                            scale: [1, 1.05, 1]
-                        }}
-                        transition={{
-                            duration: 2,
-                            repeat: Infinity
-                        }}
-                    >
-                        POPULAR
-                    </motion.span>
+                
+                {plan.freeMinutes && !isEnterprise && (
+                    <div className="text-blue-500 text-sm font-semibold mb-2">
+                        {plan.freeMinutes} free minutes
+                    </div>
+                )}
+            </div>
+            
+            {/* Price Display */}
+            <div className="mb-4">
+                {!isEnterprise ? (
+                    <div className="flex items-baseline">
+                        <span className="text-4xl font-black text-black">
+                            ${isYearly ? 
+                                <Counter from={previousPrice} to={currentPrice} /> : 
+                                <Counter from={previousPrice} to={currentPrice} />}
+                        </span>
+                        <span className="text-gray-600 ml-1">/per month</span>
+                    </div>
+                ) : (
+                    <div className="text-3xl font-black text-black">
+                        Custom Pricing
+                    </div>
                 )}
             </div>
 
+            {/* Minutes Slider - Only for non-enterprise plans */}
+            {!isEnterprise && plan.includedMinutes && (
+                <div className="mb-4">
+                    <div className="text-sm text-gray-600 mb-1">
+                        {plan.freeMinutes} free min + {selectedMinutes} min /month
+                        {plan.extraMinutesRate && ` • Extra: $${plan.extraMinutesRate}/per min`}
+                    </div>
+                    <MinutesSlider 
+                        value={selectedMinutes} 
+                        onChange={setSelectedMinutes} 
+                    />
+                </div>
+            )}
+            
+            {/* CTA Button */}
+            <motion.button
+                onClick={handleClick}
+                className={cn(
+                    `w-full py-3 px-4 rounded-lg text-white font-black text-sm
+                    border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)]
+                    hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]
+                    active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]
+                    transition-all duration-200 mb-4`
+                    , isEnterprise ? 'bg-gray-700' : plan.accent)}
+                whileHover={{
+                    scale: 1.02,
+                    transition: { duration: 0.2 }
+                }}
+                whileTap={{
+                    scale: 0.95,
+                    rotate: [-1, 1, 0],
+                }}
+            >
+                {isEnterprise ? 'CONTACT SALES' : (
+                    <div className="flex flex-col items-center">
+                        <span>START 7-DAYS TRIAL</span>
+                        <span className="text-xs font-medium opacity-80">money back guarantee</span>
+                    </div>
+                )}
+            </motion.button>
+
             {/* Features List */}
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2">
+                {!isEnterprise && (
+                    <div className="text-sm font-medium mb-2 text-gray-800">
+                        {isEnterprise ? 'any number of minutes' : (
+                            <>
+                                <span className="font-bold">{selectedMinutes} minutes</span> of AI voice translation
+                            </>
+                        )}
+                    </div>
+                )}
+                
                 {plan.features.map((feature, i) => (
                     <motion.div
                         key={feature}
@@ -262,35 +359,40 @@ const PricingCard = ({
                         <span className="text-black font-bold text-sm">{feature}</span>
                     </motion.div>
                 ))}
+                
+                {isEnterprise && (
+                    <div className="text-sm text-center text-gray-600 mt-4">
+                        any number of minutes
+                    </div>
+                )}
             </div>
-
-            {/* CTA Button */}
-            <motion.button
-                onClick={handleClick}
-                className={cn(
-                    `w-full py-2 rounded-lg text-white font-black text-sm
-                    border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)]
-                    hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]
-                    active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]
-                    transition-all duration-200`
-                    , plan.accent)}
-                whileHover={{
-                    scale: 1.02,
-                    transition: { duration: 0.2 }
-                }}
-                whileTap={{
-                    scale: 0.95,
-                    rotate: [-1, 1, 0],
-                }}
-            >
-                GET STARTED →
-            </motion.button>
+            
+            {/* Popular Badge */}
+            {plan.isPopular && (
+                <motion.span
+                    className={cn(
+                        `absolute -top-4 -right-4 px-3 py-1 text-white
+                        font-bold rounded-md text-xs border-2 border-black
+                        shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]`
+                        , plan.accent)}
+                    animate={{
+                        y: [0, -3, 0],
+                        scale: [1, 1.05, 1]
+                    }}
+                    transition={{
+                        duration: 2,
+                        repeat: Infinity
+                    }}
+                >
+                    POPULAR
+                </motion.span>
+            )}
         </motion.div>
     );
 };
 
 // Main Container Component
-export const PricingContainer = ({ title = "Pricing Plans", plans, className = "", onGetStarted }: PricingProps) => {
+export const PricingContainer = ({ title = "Choose Your Perfect Plan", plans, className = "", onGetStarted }: PricingProps) => {
     const [isYearly, setIsYearly] = useState(false);
 
     return (
@@ -299,7 +401,7 @@ export const PricingContainer = ({ title = "Pricing Plans", plans, className = "
             <PricingToggle isYearly={isYearly} onToggle={() => setIsYearly(!isYearly)} />
             <BackgroundEffects />
 
-            <div className="w-[100%] max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+            <div className="w-[100%] max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10 mt-4">
                 {plans.map((plan, index) => (
                     <PricingCard
                         key={plan.name}

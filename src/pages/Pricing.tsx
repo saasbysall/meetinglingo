@@ -7,60 +7,67 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
-// Convert the existing pricing data to the new format
+// Updated pricing plans with Talo-inspired pricing and features
 const MEETING_LINGO_PLANS: PricingPlan[] = [
   {
     name: "Starter",
     description: "Perfect for small teams and occasional meetings",
-    monthlyPrice: 19,
-    yearlyPrice: 190,
+    monthlyPrice: 50,
+    yearlyPrice: 480,  // 20% discount applied
     features: [
       'Up to 10 participants per meeting',
-      '10 hours of translation per month',
-      '7-day transcript history',
-      '5 supported languages',
-      'Basic email support'
+      'Unlimited meetings',
+      'Support for 5 languages',
+      'Basic email support',
+      'Basic meeting history'
     ],
     isPopular: false,
     accent: "bg-teal",
-    rotation: -1
+    rotation: -1,
+    freeMinutes: 10,
+    includedMinutes: 150,
+    extraMinutesRate: 0.25
   },
   {
     name: "Professional",
     description: "For growing teams with regular international meetings",
-    monthlyPrice: 49,
-    yearlyPrice: 490,
+    monthlyPrice: 100,
+    yearlyPrice: 960,  // 20% discount applied
     features: [
       'Up to 30 participants per meeting',
-      '40 hours of translation per month',
-      '30-day transcript history',
-      'All 50+ supported languages',
+      'Unlimited meetings',
+      'Support for all 50+ languages',
       'Priority support',
       'Advanced analytics',
-      'Custom language settings'
+      'Custom language settings',
+      '30-day transcript history'
     ],
     isPopular: true,
     accent: "bg-blue-500",
-    rotation: 0
+    rotation: 0,
+    freeMinutes: 10,
+    includedMinutes: 400,
+    extraMinutesRate: 0.25
   },
   {
     name: "Enterprise",
-    description: "Custom solutions for large organizations",
-    monthlyPrice: 199,
-    yearlyPrice: 1990,
+    description: "For organizations that require a custom plan tailored to their needs",
+    monthlyPrice: 500,
+    yearlyPrice: 4800,  // 20% discount applied
     features: [
       'Unlimited participants',
-      'Unlimited translation hours',
-      'Unlimited transcript history',
-      'All 50+ supported languages',
+      'Unlimited meetings',
+      'Support for all 50+ languages',
       'Dedicated support',
       'Advanced security features',
       'Custom integrations',
-      'SLA guarantees'
+      'SLA guarantees',
+      'Unlimited transcript history'
     ],
     isPopular: false,
     accent: "bg-purple-500",
-    rotation: 1
+    rotation: 1,
+    freeMinutes: 10
   }
 ];
 
