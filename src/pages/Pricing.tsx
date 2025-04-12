@@ -23,10 +23,7 @@ const MEETING_LINGO_PLANS: PricingPlan[] = [
     ],
     isPopular: false,
     accent: "bg-teal",
-    rotation: -1,
-    freeMinutes: 10,
-    includedMinutes: 150,
-    extraMinutesRate: 0.25
+    rotation: -1
   },
   {
     name: "Professional",
@@ -44,10 +41,7 @@ const MEETING_LINGO_PLANS: PricingPlan[] = [
     ],
     isPopular: true,
     accent: "bg-blue-500",
-    rotation: 0,
-    freeMinutes: 10,
-    includedMinutes: 400,
-    extraMinutesRate: 0.25
+    rotation: 0
   },
   {
     name: "Enterprise",
@@ -66,8 +60,7 @@ const MEETING_LINGO_PLANS: PricingPlan[] = [
     ],
     isPopular: false,
     accent: "bg-purple-500",
-    rotation: 1,
-    freeMinutes: 10
+    rotation: 1
   }
 ];
 
@@ -77,18 +70,14 @@ export default function Pricing() {
   const { toast } = useToast();
 
   const handleGetStarted = (planName: string) => {
-    if (planName === 'Enterprise') {
-      navigate('/contact');
+    if (user) {
+      navigate('/dashboard');
+      toast({
+        title: "Welcome back!",
+        description: "You're already logged in. You can create a new meeting from your dashboard.",
+      });
     } else {
-      if (user) {
-        navigate('/dashboard');
-        toast({
-          title: "Welcome back!",
-          description: "You're already logged in. You can create a new meeting from your dashboard.",
-        });
-      } else {
-        navigate('/signup');
-      }
+      navigate('/signup');
     }
   };
 

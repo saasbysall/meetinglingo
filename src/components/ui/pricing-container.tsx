@@ -3,8 +3,7 @@
 import React, { useRef, useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion'
 import { cn } from '@/lib/utils';
-import { Slider } from '@/components/ui/slider'
-import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export interface PricingPlan {
     name: string;
@@ -15,9 +14,6 @@ export interface PricingPlan {
     isPopular?: boolean;
     accent: string;
     rotation?: number;
-    freeMinutes?: number;
-    includedMinutes?: number;
-    extraMinutesRate?: number;
 }
 
 interface PricingProps {
@@ -128,64 +124,6 @@ const BackgroundEffects = () => (
     </>
 );
 
-// Minutes Slider Component
-const MinutesSlider = ({ 
-    value, 
-    onChange, 
-    min = 150, 
-    max = 2500 
-}: { 
-    value: number; 
-    onChange: (value: number) => void; 
-    min?: number; 
-    max?: number; 
-}) => {
-    const steps = [
-        { value: 150, label: '150 mins' },
-        { value: 400, label: '400 mins' },
-        { value: 2500, label: '2500 mins' },
-    ];
-
-    const getClosestStep = (val: number) => {
-        return steps.reduce((prev, curr) => {
-            return Math.abs(curr.value - val) < Math.abs(prev.value - val) ? curr : prev;
-        });
-    };
-
-    const handleChange = (newValue: number[]) => {
-        const step = getClosestStep(newValue[0]);
-        onChange(step.value);
-    };
-
-    const progress = ((value - min) / (max - min)) * 100;
-
-    return (
-        <div className="w-full mt-4">
-            <Progress value={progress} className="h-2 mb-2" />
-            
-            <Slider
-                value={[value]}
-                min={min}
-                max={max}
-                step={1}
-                onValueChange={handleChange}
-                className="w-full"
-            />
-            
-            <div className="flex justify-between mt-2 text-sm text-gray-600">
-                {steps.map((step) => (
-                    <span 
-                        key={step.value}
-                        className={value === step.value ? "font-bold text-black" : ""}
-                    >
-                        {step.label}
-                    </span>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 // Pricing Card Component
 const PricingCard = ({
     plan,
@@ -208,15 +146,11 @@ const PricingCard = ({
     const currentPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     const previousPrice = !isYearly ? plan.yearlyPrice : plan.monthlyPrice;
     
-    const [selectedMinutes, setSelectedMinutes] = useState(plan.includedMinutes || 400);
-
     const handleClick = () => {
         if (onGetStarted) {
             onGetStarted(plan.name);
         }
     };
-
-    const isEnterprise = plan.name === "Enterprise";
 
     return (
         <motion.div
@@ -253,45 +187,19 @@ const PricingCard = ({
                 {plan.description && (
                     <p className="text-sm text-gray-600 mb-2">{plan.description}</p>
                 )}
-                
-                {plan.freeMinutes && !isEnterprise && (
-                    <div className="text-blue-500 text-sm font-semibold mb-2">
-                        {plan.freeMinutes} free minutes
-                    </div>
-                )}
             </div>
             
             {/* Price Display */}
             <div className="mb-4">
-                {!isEnterprise ? (
-                    <div className="flex items-baseline">
-                        <span className="text-4xl font-black text-black">
-                            ${isYearly ? 
-                                <Counter from={previousPrice} to={currentPrice} /> : 
-                                <Counter from={previousPrice} to={currentPrice} />}
-                        </span>
-                        <span className="text-gray-600 ml-1">/per month</span>
-                    </div>
-                ) : (
-                    <div className="text-3xl font-black text-black">
-                        Custom Pricing
-                    </div>
-                )}
-            </div>
-
-            {/* Minutes Slider - Only for non-enterprise plans */}
-            {!isEnterprise && plan.includedMinutes && (
-                <div className="mb-4">
-                    <div className="text-sm text-gray-600 mb-1">
-                        {plan.freeMinutes} free min + {selectedMinutes} min /month
-                        {plan.extraMinutesRate && ` • Extra: $${plan.extraMinutesRate}/per min`}
-                    </div>
-                    <MinutesSlider 
-                        value={selectedMinutes} 
-                        onChange={setSelectedMinutes} 
-                    />
+                <div className="flex items-baseline">
+                    <span className="text-4xl font-black text-black">
+                        ${isYearly ? 
+                            <Counter from={previousPrice} to={currentPrice} /> : 
+                            <Counter from={previousPrice} to={currentPrice} />}
+                    </span>
+                    <span className="text-gray-600 ml-1">/per month</span>
                 </div>
-            )}
+            </div>
             
             {/* CTA Button */}
             <motion.button
@@ -302,7 +210,7 @@ const PricingCard = ({
                     hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]
                     active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.9)]
                     transition-all duration-200 mb-4`
-                    , isEnterprise ? 'bg-gray-700' : plan.accent)}
+                    , plan.accent)}
                 whileHover={{
                     scale: 1.02,
                     transition: { duration: 0.2 }
@@ -312,26 +220,14 @@ const PricingCard = ({
                     rotate: [-1, 1, 0],
                 }}
             >
-                {isEnterprise ? 'CONTACT SALES' : (
-                    <div className="flex flex-col items-center">
-                        <span>START 7-DAYS TRIAL</span>
-                        <span className="text-xs font-medium opacity-80">money back guarantee</span>
-                    </div>
-                )}
+                <div className="flex flex-col items-center">
+                    <span>START 7-DAYS TRIAL</span>
+                    <span className="text-xs font-medium opacity-80">money back guarantee</span>
+                </div>
             </motion.button>
 
             {/* Features List */}
             <div className="space-y-2">
-                {!isEnterprise && (
-                    <div className="text-sm font-medium mb-2 text-gray-800">
-                        {isEnterprise ? 'any number of minutes' : (
-                            <>
-                                <span className="font-bold">{selectedMinutes} minutes</span> of AI voice translation
-                            </>
-                        )}
-                    </div>
-                )}
-                
                 {plan.features.map((feature, i) => (
                     <motion.div
                         key={feature}
@@ -359,12 +255,6 @@ const PricingCard = ({
                         <span className="text-black font-bold text-sm">{feature}</span>
                     </motion.div>
                 ))}
-                
-                {isEnterprise && (
-                    <div className="text-sm text-center text-gray-600 mt-4">
-                        any number of minutes
-                    </div>
-                )}
             </div>
             
             {/* Popular Badge */}
