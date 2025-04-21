@@ -1,5 +1,6 @@
 
 import { Check, Globe, Zap, Lock, Download, Headphones, PieChart } from 'lucide-react';
+import { useTranslation } from '@/context/TranslationContext';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -20,36 +21,38 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => {
 };
 
 const FeaturesSection = () => {
+  const { t } = useTranslation();
+
   const features = [
     {
       icon: <Globe size={24} />,
-      title: "50+ Languages",
-      description: "Support for over 50 languages including English, Spanish, Chinese, French, German, Japanese, and more."
+      title: t('features.languages'),
+      description: t('features.languages.desc')
     },
     {
       icon: <Zap size={24} />,
-      title: "Real-time Translation",
-      description: "Instant voice translation with minimal latency, ensuring natural conversation flow during your meetings."
+      title: t('features.realtime'),
+      description: t('features.realtime.desc')
     },
     {
       icon: <Lock size={24} />,
-      title: "Privacy Focused",
-      description: "End-to-end encryption and no data retention policies to keep your conversations secure and private."
+      title: t('features.privacy'),
+      description: t('features.privacy.desc')
     },
     {
       icon: <Download size={24} />,
-      title: "Downloadable Transcripts",
-      description: "Get multi-language transcripts of your meetings for sharing or future reference."
+      title: t('features.transcripts'),
+      description: t('features.transcripts.desc')
     },
     {
       icon: <Headphones size={24} />,
-      title: "Platform Integration",
-      description: "Seamlessly works with Zoom, Microsoft Teams, and Google Meet with a simple setup process."
+      title: t('features.integration'),
+      description: t('features.integration.desc')
     },
     {
       icon: <PieChart size={24} />,
-      title: "Meeting Analytics",
-      description: "View insights on language usage, speaking time, and participation across your team's meetings."
+      title: t('features.analytics'),
+      description: t('features.analytics.desc')
     }
   ];
 
@@ -57,9 +60,9 @@ const FeaturesSection = () => {
     <section className="py-20 relative">
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-darkblue mb-4">Features that make language barriers disappear</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-darkblue mb-4">{t('features.title')}</h2>
           <p className="text-lg text-darkblue/70">
-            MeetingLingo combines cutting-edge AI with intuitive design to create a seamless translation experience.
+            {t('features.subtitle')}
           </p>
         </div>
 
@@ -78,18 +81,18 @@ const FeaturesSection = () => {
         <div className="mt-16 bg-lightgray rounded-2xl p-8 md:p-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-darkblue mb-6">How MeetingLingo Works</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-darkblue mb-6">{t('features.how')}</h3>
               <p className="text-darkblue/70 mb-8">
-                Our AI-powered solution translates speech in real-time, providing both audio output and subtitles for seamless multilingual communication.
+                {t('features.how.desc')}
               </p>
               
               <ul className="space-y-4">
                 {[
-                  "Connect MeetingLingo to your preferred video platform",
-                  "Select your desired translation language",
-                  "Join your meeting as usual",
-                  "Hear translated audio and see real-time subtitles",
-                  "Download transcripts after the meeting"
+                  t('features.step1'),
+                  t('features.step2'),
+                  t('features.step3'),
+                  t('features.step4'),
+                  t('features.step5')
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-teal/20 flex items-center justify-center text-teal mr-3 mt-0.5">

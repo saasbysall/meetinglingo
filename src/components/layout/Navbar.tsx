@@ -6,6 +6,7 @@ import { Menu, X, LogOut, Video } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import LanguageDropdown from '@/components/ui/LanguageDropdown';
+import { useTranslation } from '@/context/TranslationContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,6 +15,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Check if user is on authenticated pages
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
@@ -58,7 +60,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         <Link to="/" className="flex items-center">
           <span className="text-2xl font-bold text-darkblue">
-            Meeting<span className="text-teal">Lingo</span>
+            {t('app.name')}
           </span>
         </Link>
 
@@ -67,13 +69,13 @@ const Navbar = () => {
           {!isAppPath && (
             <div className="flex items-center space-x-6">
               <Link to="/features" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                Features
+                {t('nav.features')}
               </Link>
               <Link to="/pricing" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                Pricing
+                {t('nav.pricing')}
               </Link>
               <Link to="/about" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                About
+                {t('nav.about')}
               </Link>
             </div>
           )}
@@ -86,7 +88,7 @@ const Navbar = () => {
               <Link to="/app">
                 <Button className="bg-teal text-white hover:bg-teal/90 flex items-center space-x-2">
                   <Video size={16} />
-                  <span>App</span>
+                  <span>{t('nav.app')}</span>
                 </Button>
               </Link>
               <Button 
@@ -95,19 +97,19 @@ const Navbar = () => {
                 onClick={handleSignOut}
               >
                 <LogOut size={16} />
-                <span>Sign Out</span>
+                <span>{t('nav.signout')}</span>
               </Button>
             </div>
           ) : (
             <div className="flex items-center space-x-4">
               <Link to="/login">
                 <Button variant="outline" className="border-gray-200 hover:bg-gray-50">
-                  Log in
+                  {t('nav.login')}
                 </Button>
               </Link>
               <Link to="/signup">
                 <Button className="bg-teal text-white hover:bg-teal/90">
-                  Start Free Trial
+                  {t('nav.signup')}
                 </Button>
               </Link>
             </div>
@@ -135,21 +137,21 @@ const Navbar = () => {
                   className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Features
+                  {t('nav.features')}
                 </Link>
                 <Link 
                   to="/pricing" 
                   className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Pricing
+                  {t('nav.pricing')}
                 </Link>
                 <Link 
                   to="/about" 
                   className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  About
+                  {t('nav.about')}
                 </Link>
               </>
             )}
@@ -168,7 +170,7 @@ const Navbar = () => {
                   >
                     <Button className="w-full bg-teal text-white hover:bg-teal/90 flex items-center justify-center space-x-2">
                       <Video size={16} />
-                      <span>App</span>
+                      <span>{t('nav.app')}</span>
                     </Button>
                   </Link>
                   <Button 
@@ -180,7 +182,7 @@ const Navbar = () => {
                     }}
                   >
                     <LogOut size={16} />
-                    <span>Sign Out</span>
+                    <span>{t('nav.signout')}</span>
                   </Button>
                 </>
               ) : (
@@ -190,7 +192,7 @@ const Navbar = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Button variant="outline" className="w-full border-gray-200 hover:bg-gray-50">
-                      Log in
+                      {t('nav.login')}
                     </Button>
                   </Link>
                   <Link 
@@ -198,7 +200,7 @@ const Navbar = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Button className="w-full bg-teal text-white hover:bg-teal/90">
-                      Start Free Trial
+                      {t('nav.signup')}
                     </Button>
                   </Link>
                 </>

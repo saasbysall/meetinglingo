@@ -1,0 +1,11 @@
+
+{
+  "app.name": "MeetingLingo",
+  "nav.features": "Fonctionnalités",
+  "nav.pricing": "Tarifs",
+  "nav.about": "À propos",
+  "nav.login": "Connexion",
+  "nav.signup": "Commencer l'essai gratuit",
+  "nav.app": "Application",
+  "nav.signout": "Déconnexion"
+}

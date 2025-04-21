@@ -1,0 +1,11 @@
+
+{
+  "app.name": "MeetingLingo",
+  "nav.features": "Recursos",
+  "nav.pricing": "Preços",
+  "nav.about": "Sobre",
+  "nav.login": "Entrar",
+  "nav.signup": "Iniciar Teste Gratuito",
+  "nav.app": "Aplicativo",
+  "nav.signout": "Sair"
+}

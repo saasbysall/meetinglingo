@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "@/context/TranslationContext";
 
 const LANGUAGES = [
   { code: "en", label: "English", dir: "ltr" },
@@ -18,21 +19,19 @@ const DEFAULT_LANG = "en";
 
 export default function LanguageDropdown() {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(
-    localStorage.getItem("lang") || DEFAULT_LANG
-  );
+  const { currentLanguage, setLanguage } = useTranslation();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Set lang attribute for HTML root node and for RTL support
-    document.documentElement.lang = selected;
-    const langObj = LANGUAGES.find((l) => l.code === selected);
+    document.documentElement.lang = currentLanguage;
+    const langObj = LANGUAGES.find((l) => l.code === currentLanguage);
     if (langObj?.dir === "rtl") {
       document.body.dir = "rtl";
     } else {
       document.body.dir = "ltr";
     }
-  }, [selected]);
+  }, [currentLanguage]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,14 +47,13 @@ export default function LanguageDropdown() {
   }, []);
 
   const handleSelect = (code: string) => {
-    setSelected(code);
-    localStorage.setItem("lang", code);
+    setLanguage(code);
     setOpen(false);
     // Optional: If you want language-specific routes:
     // window.location.href = `/${code}${window.location.pathname}`;
   };
 
-  const current = LANGUAGES.find((l) => l.code === selected) || LANGUAGES[0];
+  const current = LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
 
   return (
     <div className="relative inline-block z-50" ref={dropdownRef}>
@@ -82,13 +80,13 @@ export default function LanguageDropdown() {
               tabIndex={0}
               className={`px-4 py-2 text-base cursor-pointer hover:bg-gray-100 ${
                 lang.dir === "rtl" ? "text-right" : ""
-              } ${selected === lang.code ? "font-semibold" : ""}`}
+              } ${currentLanguage === lang.code ? "font-semibold" : ""}`}
               dir={lang.dir}
               onClick={() => handleSelect(lang.code)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") handleSelect(lang.code);
               }}
-              aria-selected={selected === lang.code}
+              aria-selected={currentLanguage === lang.code}
               role="option"
             >
               {lang.label}

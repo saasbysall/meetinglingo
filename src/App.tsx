@@ -14,6 +14,7 @@ import Permissions from "./pages/Permissions";
 import Pricing from "./pages/Pricing";
 import GoogleAuthCallback from "./components/auth/GoogleAuthCallback";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { TranslationProvider } from './context/TranslationContext';
 import { SplashCursor } from "./components/ui/splash-cursor";
 
 const queryClient = new QueryClient();
@@ -74,22 +75,24 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <SplashCursor 
-            COLOR_UPDATE_SPEED={5}
-            DENSITY_DISSIPATION={2.5}
-            VELOCITY_DISSIPATION={1.5}
-            SPLAT_RADIUS={0.3}
-            SPLAT_FORCE={8000}
-            CURL={25}
-            TRANSPARENT={true}
-          />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <TranslationProvider>
+          <TooltipProvider>
+            <SplashCursor 
+              COLOR_UPDATE_SPEED={5}
+              DENSITY_DISSIPATION={2.5}
+              VELOCITY_DISSIPATION={1.5}
+              SPLAT_RADIUS={0.3}
+              SPLAT_FORCE={8000}
+              CURL={25}
+              TRANSPARENT={true}
+            />
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </TranslationProvider>
       </QueryClientProvider>
     </AuthProvider>
   );

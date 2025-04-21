@@ -1,0 +1,11 @@
+
+{
+  "app.name": "MeetingLingo",
+  "nav.features": "Özellikler",
+  "nav.pricing": "Fiyatlandırma",
+  "nav.about": "Hakkında",
+  "nav.login": "Giriş Yap",
+  "nav.signup": "Ücretsiz Denemeyi Başlat",
+  "nav.app": "Uygulama",
+  "nav.signout": "Çıkış Yap"
+}

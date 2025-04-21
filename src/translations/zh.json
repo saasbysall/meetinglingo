@@ -1,0 +1,11 @@
+
+{
+  "app.name": "MeetingLingo",
+  "nav.features": "功能",
+  "nav.pricing": "价格",
+  "nav.about": "关于",
+  "nav.login": "登录",
+  "nav.signup": "开始免费试用",
+  "nav.app": "应用",
+  "nav.signout": "退出登录"
+}

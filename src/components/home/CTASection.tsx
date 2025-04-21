@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/context/TranslationContext';
 
 const CTASection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleTrialClick = () => {
     if (user) {
@@ -37,15 +39,15 @@ const CTASection = () => {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           <span className="px-3 py-1 rounded-full bg-white/10 text-white text-sm font-medium mb-6 inline-block">
-            Ready to Get Started?
+            {t('cta.ready')}
           </span>
           
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Break language barriers in your next meeting
+            {t('cta.title')}
           </h2>
           
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-            Join thousands of global teams using MeetingLingo to communicate effortlessly across languages. Start your free trial today.
+            {t('cta.description')}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -53,7 +55,7 @@ const CTASection = () => {
               className="w-full sm:w-auto bg-teal hover:bg-teal/90 text-white px-8 py-6 text-lg"
               onClick={handleTrialClick}
             >
-              Start Your Free Trial
+              {t('cta.start')}
               <ArrowRight size={20} className="ml-2" />
             </Button>
             
@@ -62,12 +64,12 @@ const CTASection = () => {
               className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg"
               onClick={handleContactClick}
             >
-              Contact Sales
+              {t('cta.contact')}
             </Button>
           </div>
           
           <p className="text-white/60 mt-6 text-sm">
-            No credit card required. 7-day free trial.
+            {t('cta.nocredit')}
           </p>
         </div>
       </div>
