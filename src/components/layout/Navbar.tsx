@@ -59,9 +59,10 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <span className="text-2xl font-bold text-darkblue">
-            {t('app.name')}
-          </span>
+          <span 
+            className="text-2xl font-bold text-darkblue"
+            dangerouslySetInnerHTML={{ __html: t('app.name') }}
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -107,7 +108,7 @@ const Navbar = () => {
                   {t('nav.login')}
                 </Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/login">
                 <Button className="bg-teal text-white hover:bg-teal/90">
                   {t('nav.signup')}
                 </Button>
@@ -196,7 +197,7 @@ const Navbar = () => {
                     </Button>
                   </Link>
                   <Link 
-                    to="/signup" 
+                    to="/login" 
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Button className="w-full bg-teal text-white hover:bg-teal/90">

@@ -1,6 +1,6 @@
 
 {
-  "app.name": "MeetingLingo",
+  "app.name": "Meeting<span class='text-teal'>Lingo</span>",
   "nav.features": "Features",
   "nav.pricing": "Pricing",
   "nav.about": "About",
@@ -37,5 +37,13 @@
   "cta.description": "Join thousands of global teams using MeetingLingo to communicate effortlessly across languages. Start your free trial today.",
   "cta.start": "Start Your Free Trial",
   "cta.contact": "Contact Sales",
-  "cta.nocredit": "No credit card required. 7-day free trial."
+  "cta.nocredit": "No credit card required. 7-day free trial.",
+  "meeting.add": "Add Meeting<span class='text-teal'>Lingo</span> to your meeting",
+  "meeting.description": "Enter your meeting link and MeetingLingo will join the call",
+  "meeting.link": "Meeting Link",
+  "meeting.sourceLanguage": "Source Language",
+  "meeting.targetLanguage": "Target Language",
+  "meeting.join": "Join Meeting",
+  "meeting.new": "New Meeting",
+  "meeting.active": "Active Meeting"
 }

@@ -14,13 +14,13 @@ const CTASection = () => {
 
   const handleTrialClick = () => {
     if (user) {
-      navigate('/meeting/new');
+      navigate('/app');
       toast({
         title: "Welcome back!",
         description: "Create a new meeting with translation.",
       });
     } else {
-      navigate('/signup');
+      navigate('/login');
     }
   };
 

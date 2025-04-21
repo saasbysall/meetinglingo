@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Link2, Mic, Languages } from 'lucide-react';
+import { Link2, Mic, Languages, Video } from 'lucide-react';
 import GoogleMeetBot from '@/components/meeting/GoogleMeetBot';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { useTranslation } from '@/context/TranslationContext';
 
 const sourceLanguages = [
   { value: 'en-GB', label: 'English (UK)' },
@@ -28,6 +29,7 @@ const sourceLanguages = [
 ];
 
 export default function BotMeeting() {
+  const { t } = useTranslation();
   const [meetingLink, setMeetingLink] = useState('');
   const [sourceLanguage, setSourceLanguage] = useState('en-US');
   const [targetLanguage, setTargetLanguage] = useState('es-ES');
@@ -36,6 +38,7 @@ export default function BotMeeting() {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [botJoined, setBotJoined] = useState(false);
   const [activeTab, setActiveTab] = useState('new-meeting');
+  const [platformIcon, setPlatformIcon] = useState<any>(null);
   
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -67,6 +70,23 @@ export default function BotMeeting() {
       checkMicPermissions();
     }
   }, [user]);
+
+  // Function to detect meeting platform from the link
+  useEffect(() => {
+    if (meetingLink) {
+      if (meetingLink.includes('meet.google.com')) {
+        setPlatformIcon(<Video className="h-5 w-5 text-red-500" />);
+      } else if (meetingLink.includes('zoom.us')) {
+        setPlatformIcon(<Video className="h-5 w-5 text-blue-500" />);
+      } else if (meetingLink.includes('teams.microsoft.com')) {
+        setPlatformIcon(<Video className="h-5 w-5 text-purple-500" />);
+      } else {
+        setPlatformIcon(null);
+      }
+    } else {
+      setPlatformIcon(null);
+    }
+  }, [meetingLink]);
 
   const requestMicrophonePermission = async () => {
     try {
@@ -160,15 +180,15 @@ export default function BotMeeting() {
       <div className="flex-grow pt-20 p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl mx-auto">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="new-meeting">New Meeting</TabsTrigger>
-            <TabsTrigger value="active-meeting" disabled={!meetingLink}>Active Meeting</TabsTrigger>
+            <TabsTrigger value="new-meeting">{t('meeting.new')}</TabsTrigger>
+            <TabsTrigger value="active-meeting" disabled={!meetingLink}>{t('meeting.active')}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="new-meeting" className="mt-6">
             <div className="max-w-3xl mx-auto">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-center mb-2">Add MeetingLingo to your meeting</h1>
-                <p className="text-gray-600 text-center">Enter your meeting link and MeetingLingo will join the call</p>
+                <h1 className="text-3xl font-bold text-center mb-2" dangerouslySetInnerHTML={{ __html: t('meeting.add') }}></h1>
+                <p className="text-gray-600 text-center">{t('meeting.description')}</p>
               </div>
               
               <Card className="shadow-md">
@@ -176,11 +196,11 @@ export default function BotMeeting() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Meeting Link
+                        {t('meeting.link')}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Link2 className="h-4 w-4 text-gray-400" />
+                          {platformIcon || <Link2 className="h-4 w-4 text-gray-400" />}
                         </div>
                         <Input
                           value={meetingLink}
@@ -194,7 +214,7 @@ export default function BotMeeting() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Source Language
+                          {t('meeting.sourceLanguage')}
                         </label>
                         <Select 
                           value={sourceLanguage} 
@@ -215,7 +235,7 @@ export default function BotMeeting() {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Target Language
+                          {t('meeting.targetLanguage')}
                         </label>
                         <Select 
                           value={targetLanguage} 
@@ -243,7 +263,7 @@ export default function BotMeeting() {
                     className="w-full md:w-auto bg-teal hover:bg-teal/90"
                     disabled={isLoading || !meetingLink}
                   >
-                    {isLoading ? 'Processing...' : 'Join Meeting'}
+                    {isLoading ? 'Processing...' : t('meeting.join')}
                   </Button>
                 </CardFooter>
               </Card>
@@ -253,7 +273,7 @@ export default function BotMeeting() {
           <TabsContent value="active-meeting">
             <div className="max-w-3xl mx-auto">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-center mb-2">MeetingLingo Bot</h1>
+                <h1 className="text-3xl font-bold text-center mb-2" dangerouslySetInnerHTML={{ __html: t('app.name') + ' Bot' }}></h1>
                 <p className="text-gray-600 text-center">
                   {botJoined 
                     ? "The bot has joined your meeting and is translating" 

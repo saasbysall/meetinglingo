@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from '@/context/TranslationContext';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function Login() {
         title: "Success!",
         description: "You have successfully logged in.",
       });
-      navigate('/meeting/bot');
+      navigate('/app');
     } catch (error: any) {
       setError(error.message || "Failed to login. Please try again.");
       toast({
@@ -70,9 +72,7 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-darkblue mb-2">
-            Welcome to <span className="text-teal">MeetingLingo</span>
-          </h1>
+          <h1 className="text-3xl font-bold text-darkblue mb-2" dangerouslySetInnerHTML={{ __html: `${t('app.name')}` }}></h1>
         </div>
         
         <div className="bg-white rounded-xl shadow-lg p-8">
@@ -104,7 +104,7 @@ export default function Login() {
                   <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
                   <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
                 </svg>
-                Login with Google
+                {t('nav.login')} with Google
               </>
             )}
           </Button>

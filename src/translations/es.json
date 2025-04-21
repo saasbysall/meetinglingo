@@ -1,6 +1,6 @@
 
 {
-  "app.name": "MeetingLingo",
+  "app.name": "Meeting<span class='text-teal'>Lingo</span>",
   "nav.features": "Características",
   "nav.pricing": "Precios",
   "nav.about": "Acerca de",
@@ -37,5 +37,13 @@
   "cta.description": "Únete a miles de equipos globales que usan MeetingLingo para comunicarse sin esfuerzo a través de diferentes idiomas. Comienza tu prueba gratuita hoy.",
   "cta.start": "Comenzar Prueba Gratuita",
   "cta.contact": "Contactar con Ventas",
-  "cta.nocredit": "No se requiere tarjeta de crédito. Prueba gratuita de 7 días."
+  "cta.nocredit": "No se requiere tarjeta de crédito. Prueba gratuita de 7 días.",
+  "meeting.add": "Añade Meeting<span class='text-teal'>Lingo</span> a tu reunión",
+  "meeting.description": "Introduce tu enlace de reunión y MeetingLingo se unirá a la llamada",
+  "meeting.link": "Enlace de Reunión",
+  "meeting.sourceLanguage": "Idioma de Origen",
+  "meeting.targetLanguage": "Idioma de Destino",
+  "meeting.join": "Unirse a la Reunión",
+  "meeting.new": "Nueva Reunión",
+  "meeting.active": "Reunión Activa"
 }

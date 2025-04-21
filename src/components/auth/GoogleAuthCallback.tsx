@@ -45,7 +45,7 @@ export default function GoogleAuthCallback() {
               title: 'Success!',
               description: 'Successfully authenticated with Google',
             });
-            navigate('/meeting/bot');
+            navigate('/app');
             return;
           }
           
@@ -63,7 +63,7 @@ export default function GoogleAuthCallback() {
           title: 'Success!',
           description: 'Successfully authenticated with Google',
         });
-        navigate('/meeting/bot');
+        navigate('/app');
       } catch (error) {
         console.error('Error handling OAuth callback:', error);
         setStatus('error');

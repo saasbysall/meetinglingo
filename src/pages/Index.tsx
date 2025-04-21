@@ -38,7 +38,7 @@ export default function Index() {
                   asChild
                   className="bg-teal hover:bg-teal/90 text-white"
                 >
-                  <Link to="/meeting/bot">{t('bot.try')}</Link>
+                  <Link to="/app">{t('bot.try')}</Link>
                 </Button>
               </div>
               <div className="md:w-1/2 flex justify-center">
