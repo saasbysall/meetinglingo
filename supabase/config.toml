@@ -1,11 +1,1 @@
-
-# This file controls the behavior of Deno and the Supabase local development server.
-# For documentation see: https://supabase.com/docs/guides/functions/supabaseconfig
-
-[functions.google-meet-auth]
-verify_jwt = false
-import_map = "./import_map.json"
-
-[functions.translate-text]
-verify_jwt = false
-import_map = "./import_map.json"
+project_id = "mfvrqvmrzbuoizezhxmj"
