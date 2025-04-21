@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, X, LogOut, Video } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import LanguageDropdown from '@/components/ui/LanguageDropdown';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -76,7 +77,10 @@ const Navbar = () => {
               </Link>
             </div>
           )}
-          
+
+          {/* Add LanguageDropdown here */}
+          <LanguageDropdown />
+
           {user ? (
             <div className="flex items-center space-x-4">
               <Link to="/app">
@@ -150,6 +154,11 @@ const Navbar = () => {
               </>
             )}
             
+            {/* Add LanguageDropdown inside mobile menu */}
+            <div className="pt-2">
+              <LanguageDropdown />
+            </div>
+
             <div className="pt-4 flex flex-col space-y-4">
               {user ? (
                 <>
