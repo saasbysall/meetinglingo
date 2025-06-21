@@ -86,15 +86,15 @@ serve(async (req) => {
     // Handle different actions
     switch (action) {
       case 'getAuthUrl':
-        // Generate authentication URL
+        // Generate authentication URL with only valid scopes
         const authUrl = oauth2Client.generateAuthUrl({
           access_type: 'offline',
           scope: [
-            'https://www.googleapis.com/auth/meetings.space.created',
-            'https://www.googleapis.com/auth/meetings.space.joined',
-            'https://www.googleapis.com/auth/meetings.space.participant',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/meetings.space.created'
           ],
-          prompt: 'consent', // Force showing the consent screen
+          prompt: 'consent',
         });
         
         console.log(`Generated auth URL: ${authUrl.substring(0, 50)}...`);

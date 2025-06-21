@@ -1,8 +1,5 @@
 
-// Follow this setup guide to integrate the Deno runtime into your Next.js app:
-// https://docs.deno.com/runtime/manual/getting_started/nextjs
-
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "std/http/server";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,37 +7,58 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     const { audio, sourceLanguage } = await req.json();
-    // In a real implementation, you would process the audio here or call an external API
     
-    // Mocked response for demo purposes
-    const text = "This is a sample transcription text.";
+    if (!audio) {
+      throw new Error('Audio data is required');
+    }
+
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    // Convert base64 audio to blob
+    const audioBuffer = Uint8Array.from(atob(audio), c => c.charCodeAt(0));
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
     
+    // Create form data for OpenAI Whisper API
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('model', 'whisper-1');
+    if (sourceLanguage) {
+      formData.append('language', sourceLanguage.substring(0, 2)); // Get language code (e.g., 'en' from 'en-US')
+    }
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to transcribe audio');
+    }
+
+    const result = await response.json();
+
     return new Response(
-      JSON.stringify({ text }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        } 
-      }
+      JSON.stringify({ text: result.text }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error('Speech-to-text error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 400, 
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        } 
-      }
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

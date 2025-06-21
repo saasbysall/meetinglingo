@@ -1,206 +1,180 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut, Video } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import LanguageDropdown from '@/components/ui/LanguageDropdown';
 import { useTranslation } from '@/context/TranslationContext';
+import LanguageDropdown from '@/components/ui/LanguageDropdown';
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { t } = useTranslation();
-
-  // Check if user is on authenticated pages
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
-  const isAppPath = location.pathname.includes('/app') || 
-                    location.pathname.includes('/permissions');
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
 
   const handleSignOut = async () => {
     try {
       await signOut();
       toast({
         title: "Signed out successfully",
-        description: "You have been signed out of your account."
+        description: "You have been logged out.",
       });
       navigate('/');
     } catch (error) {
       toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
         variant: "destructive"
       });
     }
   };
 
+  const scrollToSection = (sectionId: string) => {
+    // If we're not on the home page, navigate there first
+    if (window.location.pathname !== '/') {
+      navigate('/', { replace: true });
+      // Wait for navigation to complete, then scroll
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      // We're already on the home page, just scroll
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    setIsMenuOpen(false);
+  };
+
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'glass-navbar py-3' : 'bg-transparent py-5'
-      }`}
-    >
-      <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <span 
-            className="text-2xl font-bold text-darkblue"
-            dangerouslySetInnerHTML={{ __html: t('app.name') }}
-          />
-        </Link>
+    <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md border-b border-gray-100 z-50">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="text-2xl font-bold">
+              Meeting<span className="text-teal">Lingo</span>
+            </span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
-          {!isAppPath && (
-            <div className="flex items-center space-x-6">
-              <Link to="/features" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                {t('nav.features')}
-              </Link>
-              <Link to="/pricing" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                {t('nav.pricing')}
-              </Link>
-              <Link to="/about" className="text-darkblue/80 font-medium hover:text-darkblue transition-colors">
-                {t('nav.about')}
-              </Link>
-            </div>
-          )}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <button 
+              onClick={() => scrollToSection('features')}
+              className="text-darkblue hover:text-teal transition-colors cursor-pointer"
+            >
+              {t('nav.features')}
+            </button>
+            <Link to="/pricing" className="text-darkblue hover:text-teal transition-colors">
+              {t('nav.pricing')}
+            </Link>
+            <button 
+              onClick={() => scrollToSection('about')}
+              className="text-darkblue hover:text-teal transition-colors cursor-pointer"
+            >
+              {t('nav.about')}
+            </button>
+            <LanguageDropdown />
+          </div>
 
-          {/* Add LanguageDropdown here */}
-          <LanguageDropdown />
-
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <Link to="/app">
-                <Button className="bg-teal text-white hover:bg-teal/90 flex items-center space-x-2">
-                  <Video size={16} />
-                  <span>{t('nav.app')}</span>
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="border-gray-200 hover:bg-gray-50 flex items-center space-x-2"
-                onClick={handleSignOut}
-              >
-                <LogOut size={16} />
-                <span>{t('nav.signout')}</span>
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-4">
-              <Link to="/login">
-                <Button variant="outline" className="border-gray-200 hover:bg-gray-50">
-                  {t('nav.login')}
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button className="bg-teal text-white hover:bg-teal/90">
-                  {t('nav.signup')}
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden text-darkblue p-2" 
-          onClick={toggleMobileMenu}
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[60px] bg-white z-40 animate-fade-in">
-          <div className="container mx-auto px-4 py-8 flex flex-col space-y-6">
-            {!isAppPath && (
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
               <>
-                <Link 
-                  to="/features" 
-                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t('nav.features')}
+                <Link to="/app">
+                  <Button variant="ghost" className="text-darkblue hover:text-teal">
+                    {t('nav.app')}
+                  </Button>
                 </Link>
-                <Link 
-                  to="/pricing" 
-                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                <Button
+                  onClick={handleSignOut}
+                  variant="ghost"
+                  className="text-darkblue hover:text-teal"
                 >
-                  {t('nav.pricing')}
+                  {t('nav.signout')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="text-darkblue hover:text-teal">
+                    {t('nav.login')}
+                  </Button>
                 </Link>
-                <Link 
-                  to="/about" 
-                  className="text-darkblue font-medium text-lg py-3 border-b border-gray-100"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {t('nav.about')}
+                <Link to="/login">
+                  <Button className="bg-teal hover:bg-teal/90 text-white">
+                    {t('nav.signup')}
+                  </Button>
                 </Link>
               </>
             )}
-            
-            {/* Add LanguageDropdown inside mobile menu */}
-            <div className="pt-2">
-              <LanguageDropdown />
-            </div>
+          </div>
 
-            <div className="pt-4 flex flex-col space-y-4">
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-darkblue hover:text-teal"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-gray-100">
+            <div className="flex flex-col space-y-4">
+              <button 
+                onClick={() => scrollToSection('features')}
+                className="text-darkblue hover:text-teal transition-colors text-left"
+              >
+                {t('nav.features')}
+              </button>
+              <Link to="/pricing" className="text-darkblue hover:text-teal transition-colors">
+                {t('nav.pricing')}
+              </Link>
+              <button 
+                onClick={() => scrollToSection('about')}
+                className="text-darkblue hover:text-teal transition-colors text-left"
+              >
+                {t('nav.about')}
+              </button>
+              <div className="pt-2">
+                <LanguageDropdown />
+              </div>
               {user ? (
                 <>
-                  <Link 
-                    to="/app" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button className="w-full bg-teal text-white hover:bg-teal/90 flex items-center justify-center space-x-2">
-                      <Video size={16} />
-                      <span>{t('nav.app')}</span>
+                  <Link to="/app">
+                    <Button variant="ghost" className="w-full justify-start text-darkblue hover:text-teal">
+                      {t('nav.app')}
                     </Button>
                   </Link>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-gray-200 hover:bg-gray-50 flex items-center justify-center space-x-2"
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMobileMenuOpen(false);
-                    }}
+                  <Button
+                    onClick={handleSignOut}
+                    variant="ghost"
+                    className="w-full justify-start text-darkblue hover:text-teal"
                   >
-                    <LogOut size={16} />
-                    <span>{t('nav.signout')}</span>
+                    {t('nav.signout')}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/login" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button variant="outline" className="w-full border-gray-200 hover:bg-gray-50">
+                  <Link to="/login">
+                    <Button variant="ghost" className="w-full justify-start text-darkblue hover:text-teal">
                       {t('nav.login')}
                     </Button>
                   </Link>
-                  <Link 
-                    to="/login" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button className="w-full bg-teal text-white hover:bg-teal/90">
+                  <Link to="/login">
+                    <Button className="w-full bg-teal hover:bg-teal/90 text-white">
                       {t('nav.signup')}
                     </Button>
                   </Link>
@@ -208,8 +182,8 @@ const Navbar = () => {
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
   );
 };

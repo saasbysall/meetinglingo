@@ -1,14 +1,70 @@
 
 project_id = "mfvrqvmrzbuoizezhxmj"
 
-[functions.speech-to-text]
-verify_jwt = false
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
-[functions.text-to-speech]
-verify_jwt = false
+[db]
+port = 54322
 
-[functions.translate-text]
-verify_jwt = false
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+ip_version = "ipv6"
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost:54321"
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://mfvrqvmrzbuoizezhxmj.supabase.co"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[[auth.providers.oauth.google]]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "env(GOOGLE_REDIRECT_URI)"
 
 [functions.google-meet-auth]
 verify_jwt = false
+
+[functions.speech-to-text]
+verify_jwt = true
+
+[functions.translate-text]
+verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = true

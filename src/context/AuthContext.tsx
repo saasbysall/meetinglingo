@@ -76,8 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Starting Google sign in process');
       
-      // Create a callback URL that includes our application route
-      // This makes it more robust and enables us to handle the callback properly
       const redirectUrl = `${window.location.origin}/auth/callback`;
       
       console.log('Using redirect URL:', redirectUrl);
@@ -86,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          scopes: 'https://www.googleapis.com/auth/meetings.space.created https://www.googleapis.com/auth/meetings.space.joined https://www.googleapis.com/auth/meetings.space.participant email profile',
+          scopes: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/meetings.space.created',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -102,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       return {
-        data: { session: null }, // Will be set by the onAuthStateChange event after redirect
+        data: { session: null },
         error: null
       };
     } catch (error) {

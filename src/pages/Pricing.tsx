@@ -7,13 +7,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
-// Updated pricing plans with Talo-inspired pricing and features
+// Updated pricing plans with proper 20% discount calculation
 const MEETING_LINGO_PLANS: PricingPlan[] = [
   {
     name: "Starter",
     description: "Perfect for small teams and occasional meetings",
     monthlyPrice: 50,
-    yearlyPrice: 480,  // 20% discount applied
+    yearlyPrice: 40,  // $50 - 20% = $40 per month when paid yearly
     features: [
       'Up to 10 participants per meeting',
       'Unlimited meetings',
@@ -29,7 +29,7 @@ const MEETING_LINGO_PLANS: PricingPlan[] = [
     name: "Professional",
     description: "For growing teams with regular international meetings",
     monthlyPrice: 100,
-    yearlyPrice: 960,  // 20% discount applied
+    yearlyPrice: 80,  // $100 - 20% = $80 per month when paid yearly
     features: [
       'Up to 30 participants per meeting',
       'Unlimited meetings',
@@ -47,7 +47,7 @@ const MEETING_LINGO_PLANS: PricingPlan[] = [
     name: "Enterprise",
     description: "For organizations that require a custom plan tailored to their needs",
     monthlyPrice: 500,
-    yearlyPrice: 4800,  // 20% discount applied
+    yearlyPrice: 400,  // $500 - 20% = $400 per month when paid yearly
     features: [
       'Unlimited participants',
       'Unlimited meetings',
@@ -71,10 +71,10 @@ export default function Pricing() {
 
   const handleGetStarted = (planName: string) => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/app');
       toast({
         title: "Welcome back!",
-        description: "You're already logged in. You can create a new meeting from your dashboard.",
+        description: "You can now create meetings with translation.",
       });
     } else {
       navigate('/signup');

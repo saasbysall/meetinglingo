@@ -23,7 +23,9 @@ export default function Index() {
         <HeroSection />
         
         {/* Features Section */}
-        <FeaturesSection />
+        <section id="features">
+          <FeaturesSection />
+        </section>
         
         {/* Bot Translation Feature - NEW */}
         <section className="py-12 bg-gradient-to-r from-blue-50 to-teal-50">
@@ -58,7 +60,9 @@ export default function Index() {
         <IntegrationsSection />
         
         {/* Testimonial Section */}
-        <TestimonialSection />
+        <section id="about">
+          <TestimonialSection />
+        </section>
         
         {/* Pricing Section */}
         <PricingSection />
